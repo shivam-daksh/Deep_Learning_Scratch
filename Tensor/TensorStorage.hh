@@ -1,0 +1,84 @@
+// Tensor Storage
+
+#include <vector>
+#include <stdexcept>
+class TensorStorage {
+    private:
+        std::vector<double> buffer;
+    public:
+        void resize(size_t arraySize){
+            this->buffer.resize(arraySize);
+        }
+
+        double& operator[](const size_t index){
+            if(index >= buffer.size()) throw std::out_of_range("Tensor index out of bounds");
+            return this->buffer[index];
+        }
+        const double& operator[](const size_t index) const{
+            if(index >= buffer.size()) throw std::out_of_range("Tensor index out of bounds");
+            return this->buffer[index];
+        }
+};
+
+class Tensor {
+    private:
+        TensorStorage storage;
+        std::vector<size_t> shape;
+        std::vector<size_t> stride;
+        size_t size;
+    public:
+        Tensor(const std::vector<size_t> &shape){
+            this->shape = shape;
+            size_t arraySize = 1;
+            for(size_t i = 0; i < shape.size(); i++){
+                arraySize *= (shape[i]);
+            }
+
+            this->storage.resize(arraySize);
+            this->size = arraySize;
+
+            //update the stride
+            size_t strideSize = shape.size();
+            this->stride.resize(strideSize);
+
+            if(strideSize == 0){
+                return;
+            }
+            // assign the last element to be 1
+            size_t prev = 1;
+            int n = static_cast<int>(strideSize);
+            for(int i = n - 1; i >= 0; i--){
+                if(shape[i] == 0){
+                    stride[i] = 0;
+                } else {
+                    stride[i] = prev;
+                    prev *= shape[i];
+                }
+            }
+        }
+        
+        double& operator()(const std::vector<size_t>&indices){
+            // bound checking
+            if(indices.size() != this->shape.size()) throw std::invalid_argument("Incorrect number of indices");
+            for(size_t i = 0; i < indices.size(); i++) if(indices[i] >= this->shape[i]) throw std::out_of_range("Tensor index out of bounds");
+
+            size_t index = 0;
+            for(size_t i = 0; i < indices.size(); i++){
+                index += (this->stride[i] * indices[i]);
+            }
+            return this->storage[index];
+        }
+        
+        const double& operator()(const std::vector<size_t>&indices) const{
+            // bound checking
+            if(indices.size() != this->shape.size()) throw std::invalid_argument("Incorrect number of indices");
+            for(size_t i = 0; i < indices.size(); i++) if(indices[i] >= this->shape[i]) throw std::out_of_range("Tensor index out of bounds");
+
+            size_t index = 0;
+            for(size_t i = 0; i < indices.size(); i++){
+                index += (this->stride[i] * indices[i]);
+            }
+            return this->storage[index];
+        }
+        
+};
