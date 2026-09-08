@@ -114,6 +114,28 @@ class Tensor {
             return this->storage[index];
         }
 
+        bool isBroadcastCompatible(const Tensor& a, const Tensor& b) const{
+            int offset = 0;
+            int n = 0;
+            if(a.shape.size() > b.shape.size()){
+                n = b.shape.size();
+                offset = a.shape.size() - b.shape.size();
+
+                for(int i = n-1; i >= 0; i--){
+                    if(b.shape[i] != 1 && a.shape[i + offset] != 1 && b.shape[i] != a.shape[i + offset]) return false;
+                }
+                return true;
+            } else {
+                n = a.shape.size();
+                offset = b.shape.size() - a.shape.size();
+
+                for(int i = n-1; i >= 0; i--){
+                    if(b.shape[i+offset] != 1 && a.shape[i] != 1 && a.shape[i] != b.shape[i+offset]) return false;
+                }
+                return true;
+            }
+        }
+
         std::vector<size_t> broadcastShape(const Tensor& a, const Tensor& b) const{
             // check if any of them is scalar
             if(a.shape.size() == 0) return b.shape;
@@ -189,14 +211,54 @@ class Tensor {
             return res;
         }
 
+        std::vector<size_t> returnIndex(size_t index, const std::vector<size_t>& shape) const {
+            std::vector<size_t> indices(shape.size(),0);
+
+            for(int i = shape.size() - 1; i >= 0; i--){
+                indices[i] = index % shape[i];
+                index /= shape[i];
+            }
+
+            // std::reverse(indices.begin(), indices.end());
+
+            return indices;
+        }
         // Element-wise Addition
         Tensor operator+(const Tensor& other) const{
-            Tensor res(this->shape);
+            Tensor res;
             //check the shape
-            if(this->shape.size() != other.shape.size()) throw std::invalid_argument("Tensor size must match for addition");
+            // if(this->shape.size() != other.shape.size()) throw std::invalid_argument("Tensor size must match for addition");
+            if(isBroadcastCompatible(*this, other)){
+                std::vector<size_t> outputShape = this->broadcastShape(*this, other);
+                
+                res.resize(outputShape);
+                for(size_t i = 0; i < res.size; i++){
+                    //convert the linear index to dimension coordinates of the tensor
+                    std::vector<size_t> indices = this->returnIndex(i, outputShape);
+                    
+                    // calculate the broadcast indices of this tensor
+                    std::vector<size_t> thisIndex = this->broadcastIndex(indices, *this);
+                    //calculate the broadcast indices of the other tensor
+                    std::vector<size_t> otherIndex = this->broadcastIndex(indices, other);
 
+                    // calculate the value and store
+                    res(indices) = (*this)(thisIndex) + other(otherIndex);
+                }
+                return res;
+            }
+
+            res.resize(this->shape);
             for(size_t i = 0; i < this->shape.size(); i++){
-                if(this->shape[i] != other.shape[i]) throw std::invalid_argument("Tensor shapes must match for addition");
+                if(this->shape[i] != other.shape[i]){
+                    std::cout << "A Shape : ";
+                    for(int i = 0; i < this->shape.size(); i++) std::cout << this->shape[i] << " ";
+                    std::cout << std::endl;
+                    std::cout << "B Shape : ";
+                    for(int i = 0; i < other.shape.size(); i++) std::cout << other.shape[i] << " ";
+                    std::cout << std::endl;
+                    
+                    throw std::invalid_argument("Tensor shapes must match for addition");
+                }
             }
 
             // element-wise addition
@@ -208,13 +270,32 @@ class Tensor {
         
         // Element-wise Subtraction
         Tensor operator-(const Tensor& other) const{
-            //check the shape
-            if(this->shape.size() != other.shape.size()) throw std::invalid_argument("Tensor size must match for subtraction");
+            Tensor res;
+            // if(this->shape.size() != other.shape.size()) throw std::invalid_argument("Tensor size must match for addition");
+            if(isBroadcastCompatible(*this, other)){
+                std::vector<size_t> outputShape = this->broadcastShape(*this, other);
+                
+                res.resize(outputShape);
+                for(size_t i = 0; i < res.size; i++){
+                    //convert the linear index to dimension coordinates of the tensor
+                    std::vector<size_t> indices = this->returnIndex(i, outputShape);
+                    
+                    // calculate the broadcast indices of this tensor
+                    std::vector<size_t> thisIndex = this->broadcastIndex(indices, *this);
+                    //calculate the broadcast indices of the other tensor
+                    std::vector<size_t> otherIndex = this->broadcastIndex(indices, other);
+
+                    // calculate the value and store
+                    res(indices) = (*this)(thisIndex) - other(otherIndex);
+                }
+                return res;
+            }
+
+            res.resize(this->shape);
+
             for(size_t i = 0; i < this->shape.size(); i++){
                 if(this->shape[i] != other.shape[i]) throw std::invalid_argument("Tensor shapes must match for subtraction");
             }
-    
-            Tensor res(this->shape);
 
             // element-wise subtraction
             for(size_t i = 0; i < this->size; i++){
