@@ -1,5 +1,5 @@
 // Tensor Storage
-
+#include <algorithm>
 #include <vector>
 #include <stdexcept>
 class TensorStorage {
@@ -14,6 +14,7 @@ class TensorStorage {
             if(index >= buffer.size()) throw std::out_of_range("Tensor index out of bounds");
             return this->buffer[index];
         }
+
         const double& operator[](const size_t index) const{
             if(index >= buffer.size()) throw std::out_of_range("Tensor index out of bounds");
             return this->buffer[index];
@@ -27,7 +28,38 @@ class Tensor {
         std::vector<size_t> stride;
         size_t size;
     public:
+        Tensor(){}
         Tensor(const std::vector<size_t> &shape){
+            this->shape = shape;
+            size_t arraySize = 1;
+            for(size_t i = 0; i < shape.size(); i++){
+                arraySize *= (shape[i]);
+            }
+
+            this->storage.resize(arraySize);
+            this->size = arraySize;
+
+            //update the stride
+            size_t strideSize = shape.size();
+            this->stride.resize(strideSize);
+
+            if(strideSize == 0){
+                return;
+            }
+            // assign the last element to be 1
+            size_t prev = 1;
+            int n = static_cast<int>(strideSize);
+            for(int i = n - 1; i >= 0; i--){
+                if(shape[i] == 0){
+                    stride[i] = 0;
+                } else {
+                    stride[i] = prev;
+                    prev *= shape[i];
+                }
+            }
+        }
+
+        void resize(const std::vector<size_t> shape){
             this->shape = shape;
             size_t arraySize = 1;
             for(size_t i = 0; i < shape.size(); i++){
@@ -66,6 +98,7 @@ class Tensor {
             for(size_t i = 0; i < indices.size(); i++){
                 index += (this->stride[i] * indices[i]);
             }
+
             return this->storage[index];
         }
         
@@ -80,5 +113,116 @@ class Tensor {
             }
             return this->storage[index];
         }
+
+        std::vector<size_t> broadcastShape(const Tensor& a, const Tensor& b) const{
+            // check if any of them is scalar
+            if(a.shape.size() == 0) return b.shape;
+            if(b.shape.size() == 0) return a.shape;
+
+            if(a.shape.size() > b.shape.size()){
+                size_t offset = a.shape.size() - b.shape.size();
+                std::vector<size_t> res;
+                for(int i = b.shape.size() - 1; i >=0; i--){
+                    if((b.shape[i] == a.shape[offset + i]) || (b.shape[i] == 1) || (a.shape[offset + i] == 1)){
+                        if(b.shape[i] == a.shape[offset + i]){
+                            res.push_back(b.shape[i]);
+                        } else if(b.shape[i] == 1) {
+                            res.push_back(a.shape[offset + i]);
+                        } else {
+                            res.push_back(b.shape[i]);
+                        }
+
+                    } else {
+                        throw std::invalid_argument("Tensor shapes must be compatible for broadcasting");
+                    }
+                }
+                if(offset > 0){
+                    for(int i = offset-1; i >=0; i--){
+                        res.push_back(a.shape[i]);
+                    }
+                }
+                std::reverse(res.begin(), res.end());
+                return res;
+            } else {
+                size_t offset = b.shape.size() - a.shape.size();
+                std::vector<size_t> res;
+                for(int i = a.shape.size() - 1; i >=0; i--){
+                    if((a.shape[i] == b.shape[offset + i]) || (a.shape[i] == 1) || (b.shape[offset + i] == 1)){
+                        if(b.shape[i + offset] == a.shape[i]){
+                            res.push_back(b.shape[i]);
+                        } else if(b.shape[i] == 1) {
+                            res.push_back(a.shape[i]);
+                        } else {
+                            res.push_back(b.shape[offset + i]);
+                        }
+                    } else {
+                        throw std::invalid_argument("Tensor shapes must be compatible for broadcasting");
+                    }
+                }
+
+                if(offset > 0){
+                    for(int i = offset - 1; i >=0; i--){
+                        res.push_back(b.shape[i]);
+                    }
+                }
+
+                std::reverse(res.begin(), res.end());
+                return res;
+            }
+        }
+
+        std::vector<size_t> broadcastIndex(const std::vector<size_t>& outputIndex, const Tensor& tensor) const {
+            size_t n = tensor.shape.size();
+            size_t offset = 0;
+            if(outputIndex.size() > n) offset = outputIndex.size() - n; //outputIndex size couldn't be smaller than the given tensor because outputIndex will always have the dimensions equal to the highest dimension tensor.
+            
+            std::vector<size_t> res;
+            for(int i = n-1; i >= 0; i--){
+                size_t value = tensor.shape[i] == 1 ? 0 : outputIndex[i+offset];
+                res.push_back(value);
+            }
+            // for(int i = offset  - 1; i >= 0; i--){
+            //     res.push_back(outputIndex[i]);
+            // }
+
+            std::reverse(res.begin(), res.end());
+            return res;
+        }
+
+        // Element-wise Addition
+        Tensor operator+(const Tensor& other) const{
+            Tensor res(this->shape);
+            //check the shape
+            if(this->shape.size() != other.shape.size()) throw std::invalid_argument("Tensor size must match for addition");
+
+            for(size_t i = 0; i < this->shape.size(); i++){
+                if(this->shape[i] != other.shape[i]) throw std::invalid_argument("Tensor shapes must match for addition");
+            }
+
+            // element-wise addition
+            for(size_t i = 0; i < this->size; i++){
+                res.storage[i] = this->storage[i] + other.storage[i];
+            }
+            return res;
+        }
+        
+        // Element-wise Subtraction
+        Tensor operator-(const Tensor& other) const{
+            //check the shape
+            if(this->shape.size() != other.shape.size()) throw std::invalid_argument("Tensor size must match for subtraction");
+            for(size_t i = 0; i < this->shape.size(); i++){
+                if(this->shape[i] != other.shape[i]) throw std::invalid_argument("Tensor shapes must match for subtraction");
+            }
+    
+            Tensor res(this->shape);
+
+            // element-wise subtraction
+            for(size_t i = 0; i < this->size; i++){
+                res.storage[i] = this->storage[i] - other.storage[i];
+            }
+
+            return res;
+        }
+
         
 };
