@@ -114,7 +114,13 @@ class Tensor {
             return this->storage[index];
         }
 
-        bool isBroadcastCompatible(const Tensor& a, const Tensor& b) const{
+        bool areShapesEqual(const std::vector<size_t>&a, const std::vector<size_t>&b)const {
+            if(a.size() != b.size()) return false;
+            for(int i = 0; i < a.size(); i++) if(a[i] != b[i]) return false;
+            return true;
+        }
+
+        bool areBroadcastCompatible(const Tensor& a, const Tensor& b) const {
             int offset = 0;
             int n = 0;
             if(a.shape.size() > b.shape.size()){
@@ -228,7 +234,28 @@ class Tensor {
             Tensor res;
             //check the shape
             // if(this->shape.size() != other.shape.size()) throw std::invalid_argument("Tensor size must match for addition");
-            if(isBroadcastCompatible(*this, other)){
+            if(this->areShapesEqual(this->shape, other.shape)){
+                res.resize(this->shape);
+                // for(size_t i = 0; i < this->shape.size(); i++){
+                //     if(this->shape[i] != other.shape[i]){
+                //         std::cout << "A Shape : ";
+                //         for(int i = 0; i < this->shape.size(); i++) std::cout << this->shape[i] << " ";
+                //         std::cout << std::endl;
+                //         std::cout << "B Shape : ";
+                //         for(int i = 0; i < other.shape.size(); i++) std::cout << other.shape[i] << " ";
+                //         std::cout << std::endl;
+                        
+                //         throw std::invalid_argument("Tensor shapes must match for addition");
+                //     }
+                // }
+
+                // element-wise addition
+                for(size_t i = 0; i < this->size; i++){
+                    res.storage[i] = this->storage[i] + other.storage[i];
+                }
+                return res;
+
+            } else if(areBroadcastCompatible(*this, other)){
                 std::vector<size_t> outputShape = this->broadcastShape(*this, other);
                 
                 res.resize(outputShape);
@@ -245,34 +272,43 @@ class Tensor {
                     res(indices) = (*this)(thisIndex) + other(otherIndex);
                 }
                 return res;
+            } else {
+                std::cout << "A Shape : ";
+                for(int i = 0; i < this->shape.size(); i++) std::cout << this->shape[i] << " ";
+                std::cout << std::endl;
+                std::cout << "B Shape : ";
+                for(int i = 0; i < other.shape.size(); i++) std::cout << other.shape[i] << " ";
+                std::cout << std::endl;
+                throw std::invalid_argument("Tensors shape are invalid for addition");
             }
-
-            res.resize(this->shape);
-            for(size_t i = 0; i < this->shape.size(); i++){
-                if(this->shape[i] != other.shape[i]){
-                    std::cout << "A Shape : ";
-                    for(int i = 0; i < this->shape.size(); i++) std::cout << this->shape[i] << " ";
-                    std::cout << std::endl;
-                    std::cout << "B Shape : ";
-                    for(int i = 0; i < other.shape.size(); i++) std::cout << other.shape[i] << " ";
-                    std::cout << std::endl;
-                    
-                    throw std::invalid_argument("Tensor shapes must match for addition");
-                }
-            }
-
-            // element-wise addition
-            for(size_t i = 0; i < this->size; i++){
-                res.storage[i] = this->storage[i] + other.storage[i];
-            }
-            return res;
         }
         
         // Element-wise Subtraction
         Tensor operator-(const Tensor& other) const{
             Tensor res;
             // if(this->shape.size() != other.shape.size()) throw std::invalid_argument("Tensor size must match for addition");
-            if(isBroadcastCompatible(*this, other)){
+            if(this->areShapesEqual(this->shape, other.shape)){
+                res.resize(this->shape);
+                // for(size_t i = 0; i < this->shape.size(); i++){
+                //     if(this->shape[i] != other.shape[i]){
+                //         std::cout << "A Shape : ";
+                //         for(int i = 0; i < this->shape.size(); i++) std::cout << this->shape[i] << " ";
+                //         std::cout << std::endl;
+                //         std::cout << "B Shape : ";
+                //         for(int i = 0; i < other.shape.size(); i++) std::cout << other.shape[i] << " ";
+                //         std::cout << std::endl;
+                        
+                //         throw std::invalid_argument("Tensor shapes must match for subtraction");
+                //     }
+                // }
+
+                // element-wise addition
+                for(size_t i = 0; i < this->size; i++){
+                    res.storage[i] = this->storage[i] - other.storage[i];
+                }
+                return res;
+
+            } else if(areBroadcastCompatible(*this, other)){
                 std::vector<size_t> outputShape = this->broadcastShape(*this, other);
                 
                 res.resize(outputShape);
@@ -289,20 +325,15 @@ class Tensor {
                     res(indices) = (*this)(thisIndex) - other(otherIndex);
                 }
                 return res;
+            } else {
+                std::cout << "A Shape : ";
+                for(int i = 0; i < this->shape.size(); i++) std::cout << this->shape[i] << " ";
+                std::cout << std::endl;
+                std::cout << "B Shape : ";
+                for(int i = 0; i < other.shape.size(); i++) std::cout << other.shape[i] << " ";
+                std::cout << std::endl;
+                throw std::invalid_argument("Invalid shape of the tensors subtraction");
             }
-
-            res.resize(this->shape);
-
-            for(size_t i = 0; i < this->shape.size(); i++){
-                if(this->shape[i] != other.shape[i]) throw std::invalid_argument("Tensor shapes must match for subtraction");
-            }
-
-            // element-wise subtraction
-            for(size_t i = 0; i < this->size; i++){
-                res.storage[i] = this->storage[i] - other.storage[i];
-            }
-
-            return res;
         }
 
         
