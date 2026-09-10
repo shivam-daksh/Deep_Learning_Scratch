@@ -6,10 +6,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+
 add_executable(tensor_test
-    src/main.cpp
+    src/tests/TensorTests.cpp
 )
 
 target_include_directories(tensor_test PRIVATE
-    ${PROJECT_SOURCE_DIR}/src
+    src
 )

@@ -6,8 +6,14 @@ class TensorStorage {
     private:
         std::vector<double> buffer;
     public:
+        TensorStorage(){
+
+        }
         void resize(size_t arraySize){
             this->buffer.resize(arraySize);
+            for(size_t i = 0; i < arraySize; i++){
+                this->buffer[i] = 0.0;
+            }
         }
 
         double& operator[](const size_t index){
@@ -30,33 +36,7 @@ class Tensor {
     public:
         Tensor(){}
         Tensor(const std::vector<size_t> &shape){
-            this->shape = shape;
-            size_t arraySize = 1;
-            for(size_t i = 0; i < shape.size(); i++){
-                arraySize *= (shape[i]);
-            }
-
-            this->storage.resize(arraySize);
-            this->size = arraySize;
-
-            //update the stride
-            size_t strideSize = shape.size();
-            this->stride.resize(strideSize);
-
-            if(strideSize == 0){
-                return;
-            }
-            // assign the last element to be 1
-            size_t prev = 1;
-            int n = static_cast<int>(strideSize);
-            for(int i = n - 1; i >= 0; i--){
-                if(shape[i] == 0){
-                    stride[i] = 0;
-                } else {
-                    stride[i] = prev;
-                    prev *= shape[i];
-                }
-            }
+            this->resize(shape);
         }
 
         void resize(const std::vector<size_t> shape){
@@ -66,6 +46,7 @@ class Tensor {
                 arraySize *= (shape[i]);
             }
 
+            //Allocate (resize) the memory in the storage
             this->storage.resize(arraySize);
             this->size = arraySize;
 
@@ -76,7 +57,8 @@ class Tensor {
             if(strideSize == 0){
                 return;
             }
-            // assign the last element to be 1
+
+            // Stride of the lowest dimension is 1. 
             size_t prev = 1;
             int n = static_cast<int>(strideSize);
             for(int i = n - 1; i >= 0; i--){
@@ -177,7 +159,7 @@ class Tensor {
                 for(int i = a.shape.size() - 1; i >=0; i--){
                     if((a.shape[i] == b.shape[offset + i]) || (a.shape[i] == 1) || (b.shape[offset + i] == 1)){
                         if(b.shape[i + offset] == a.shape[i]){
-                            res.push_back(b.shape[i]);
+                            res.push_back(b.shape[i+offset]);
                         } else if(b.shape[i] == 1) {
                             res.push_back(a.shape[i]);
                         } else {
@@ -236,18 +218,6 @@ class Tensor {
             // if(this->shape.size() != other.shape.size()) throw std::invalid_argument("Tensor size must match for addition");
             if(this->areShapesEqual(this->shape, other.shape)){
                 res.resize(this->shape);
-                // for(size_t i = 0; i < this->shape.size(); i++){
-                //     if(this->shape[i] != other.shape[i]){
-                //         std::cout << "A Shape : ";
-                //         for(int i = 0; i < this->shape.size(); i++) std::cout << this->shape[i] << " ";
-                //         std::cout << std::endl;
-                //         std::cout << "B Shape : ";
-                //         for(int i = 0; i < other.shape.size(); i++) std::cout << other.shape[i] << " ";
-                //         std::cout << std::endl;
-                        
-                //         throw std::invalid_argument("Tensor shapes must match for addition");
-                //     }
-                // }
 
                 // element-wise addition
                 for(size_t i = 0; i < this->size; i++){
@@ -286,23 +256,10 @@ class Tensor {
         // Element-wise Subtraction
         Tensor operator-(const Tensor& other) const{
             Tensor res;
-            // if(this->shape.size() != other.shape.size()) throw std::invalid_argument("Tensor size must match for addition");
             if(this->areShapesEqual(this->shape, other.shape)){
                 res.resize(this->shape);
-                // for(size_t i = 0; i < this->shape.size(); i++){
-                //     if(this->shape[i] != other.shape[i]){
-                //         std::cout << "A Shape : ";
-                //         for(int i = 0; i < this->shape.size(); i++) std::cout << this->shape[i] << " ";
-                //         std::cout << std::endl;
-                //         std::cout << "B Shape : ";
-                //         for(int i = 0; i < other.shape.size(); i++) std::cout << other.shape[i] << " ";
-                //         std::cout << std::endl;
-                        
-                //         throw std::invalid_argument("Tensor shapes must match for subtraction");
-                //     }
-                // }
 
-                // element-wise addition
+                // element-wise subtraction
                 for(size_t i = 0; i < this->size; i++){
                     res.storage[i] = this->storage[i] - other.storage[i];
                 }
@@ -332,8 +289,150 @@ class Tensor {
                 std::cout << "B Shape : ";
                 for(int i = 0; i < other.shape.size(); i++) std::cout << other.shape[i] << " ";
                 std::cout << std::endl;
-                throw std::invalid_argument("Invalid shape of the tensors subtraction");
+                throw std::invalid_argument("Invalid shape of the tensors element-wise subtraction");
             }
+        }
+
+        Tensor operator*(const Tensor& other) const{
+            Tensor res;
+
+            if(this->areShapesEqual(this->shape, other.shape)){
+                res.resize(this->shape);
+                // element-wise multiplication
+                for(size_t i = 0; i < this->size; i++){
+                    res.storage[i] = this->storage[i] * other.storage[i];
+                }
+                return res;
+
+            } else if(areBroadcastCompatible(*this, other)){
+                std::vector<size_t> outputShape = this->broadcastShape(*this, other);
+                
+                res.resize(outputShape);
+                for(size_t i = 0; i < res.size; i++){
+                    //convert the linear index to dimension coordinates of the tensor
+                    std::vector<size_t> indices = this->returnIndex(i, outputShape);
+                    
+                    // calculate the broadcast indices of this tensor
+                    std::vector<size_t> thisIndex = this->broadcastIndex(indices, *this);
+                    //calculate the broadcast indices of the other tensor
+                    std::vector<size_t> otherIndex = this->broadcastIndex(indices, other);
+
+                    // calculate the value and store
+                    res(indices) = (*this)(thisIndex) * other(otherIndex);
+                }
+                return res;
+            } else {
+                std::cout << "A Shape : ";
+                for(int i = 0; i < this->shape.size(); i++) std::cout << this->shape[i] << " ";
+                std::cout << std::endl;
+                std::cout << "B Shape : ";
+                for(int i = 0; i < other.shape.size(); i++) std::cout << other.shape[i] << " ";
+                std::cout << std::endl;
+                throw std::invalid_argument("Invalid shape of the tensors element-wise multiplication");
+            }
+        }
+
+
+
+        Tensor operator/(const Tensor& other) const{
+            Tensor res;
+
+            if(this->areShapesEqual(this->shape, other.shape)){
+                res.resize(this->shape);
+
+                for(size_t i = 0; i < this->size; i++){
+                    if(other.storage[i] == 0.0){
+                        throw std::domain_error("Division by zero");
+                    }
+
+                    res.storage[i] = this->storage[i] / other.storage[i];
+                }
+
+                return res;
+
+            } else if(areBroadcastCompatible(*this, other)){
+                std::vector<size_t> outputShape = this->broadcastShape(*this, other);
+
+                res.resize(outputShape);
+
+                for(size_t i = 0; i < res.size; i++){
+                    std::vector<size_t> indices =
+                        this->returnIndex(i, outputShape);
+
+                    std::vector<size_t> thisIndex =
+                        this->broadcastIndex(indices, *this);
+
+                    std::vector<size_t> otherIndex =
+                        this->broadcastIndex(indices, other);
+
+                    double denominator = other(otherIndex);
+
+                    if(denominator == 0.0){
+                        throw std::domain_error("Division by zero");
+                    }
+
+                    res(indices) =
+                        (*this)(thisIndex) / denominator;
+                }
+
+                return res;
+
+            } else {
+                throw std::invalid_argument(
+                    "Invalid shape of the tensors division"
+                );
+            }
+        }
+
+        Tensor transpose() {
+            std::reverse(this->shape.begin(), this->shape.end());
+            std::reverse(this->stride.begin(), this->stride.end());
+            return *this;
+        }
+
+        Tensor T() {
+            return this->transpose();
+        }
+
+        Tensor sum(size_t axis =  0, bool keepdim=false){
+            if(axis >= this->shape.size()) throw std::out_of_range("Axis (index) out of the bound of the shape");
+            if(this->shape[axis] == 0) throw std::invalid_argument("Zero axis can't be reduced");
+            
+            //allocate new space;
+            Tensor res;
+            // Get the dimensions and size of the new output tensor
+            std::vector<size_t> outputShape;
+            for(size_t i = 0; i < this->shape.size(); i++){
+                if((!keepdim) && i == axis) continue;
+                outputShape.push_back(this->shape[i]);
+            }
+            
+            if(this->shape[axis] == 0){
+                throw std::invalid_argument("Zero axis can't be reduced");
+            }
+
+            // allocate the space for new tensor
+            res.resize(outputShape);
+
+            // now, reduce the tensor
+            for(size_t i = 0; i < this->size; i++){
+                std::vector<size_t> indices = this->returnIndex(i, this->shape);
+                std::vector<size_t> outputIndex;
+                for(size_t i = 0; i < indices.size(); i++){
+                    if(i == axis){
+                        if(keepdim){
+                            outputIndex.push_back(0);
+                        }
+                    } else {
+                        outputIndex.push_back(indices[i]);
+                    }
+                }
+
+                res(outputIndex) += (*this)(indices);
+            }
+
+            return res;
+
         }
 
         
