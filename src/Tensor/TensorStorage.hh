@@ -394,7 +394,7 @@ class Tensor {
             return this->transpose();
         }
 
-        Tensor sum(size_t axis =  0, bool keepdim=false){
+        Tensor sum(size_t axis =  0, bool keepdim=false) const {
             if(axis >= this->shape.size()) throw std::out_of_range("Axis (index) out of the bound of the shape");
             // if(this->shape[axis] == 0) throw std::invalid_argument("Zero axis can't be reduced");
             
@@ -440,5 +440,26 @@ class Tensor {
 
         }
 
+        Tensor mean(size_t axis = 0, bool keepdim = false) const {
+            if(axis >= this->shape.size())
+                throw std::out_of_range(
+                    "Axis (index) out of the bound of the shape"
+                );
+
+            if(this->shape[axis] == 0)
+                throw std::invalid_argument(
+                    "Zero axis can't be reduced"
+                );
+
+            Tensor res = this->sum(axis, keepdim);
+
+            double divisor = static_cast<double>(this->shape[axis]);
+
+            for(size_t i = 0; i < res.size; i++) {
+                res.storage[i] /= divisor;
+            }
+
+            return res;
+        }
         
 };
