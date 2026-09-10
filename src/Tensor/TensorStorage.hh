@@ -396,14 +396,19 @@ class Tensor {
 
         Tensor sum(size_t axis =  0, bool keepdim=false){
             if(axis >= this->shape.size()) throw std::out_of_range("Axis (index) out of the bound of the shape");
-            if(this->shape[axis] == 0) throw std::invalid_argument("Zero axis can't be reduced");
+            // if(this->shape[axis] == 0) throw std::invalid_argument("Zero axis can't be reduced");
             
             //allocate new space;
             Tensor res;
             // Get the dimensions and size of the new output tensor
             std::vector<size_t> outputShape;
             for(size_t i = 0; i < this->shape.size(); i++){
-                if((!keepdim) && i == axis) continue;
+                if(i == axis) {
+                    if(keepdim){
+                        outputShape.push_back(1);
+                    }
+                    continue;
+                }
                 outputShape.push_back(this->shape[i]);
             }
             
