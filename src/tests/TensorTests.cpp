@@ -488,6 +488,106 @@ int main()
         printTest("Reject reduction of zero-sized axis", test17);
 
 
+        // ============================================================
+        // TEST 18: Mean along axis 0
+        // [2,3]
+        //
+        // [1 2 3]
+        // [4 5 6]
+        //
+        // -> [2.5 3.5 4.5]
+        // ============================================================
+
+        Tensor AS({2,3});
+
+        AS({0,0}) = 1;
+        AS({0,1}) = 2;
+        AS({0,2}) = 3;
+        AS({1,0}) = 4;
+        AS({1,1}) = 5;
+        AS({1,2}) = 6;
+
+        Tensor AT = AS.mean(0);
+
+        bool test18 =
+            AT({0}) == 2.5 &&
+            AT({1}) == 3.5 &&
+            AT({2}) == 4.5;
+
+        printTest("Mean [2,3] along axis 0", test18);
+
+
+        // ============================================================
+        // TEST 19: Mean along axis 1
+        //
+        // [1 2 3]
+        // [4 5 6]
+        //
+        // -> [2, 5]
+        // ============================================================
+
+        Tensor AU = AS.mean(1);
+
+        bool test19 =
+            AU({0}) == 2.0 &&
+            AU({1}) == 5.0;
+
+        printTest("Mean [2,3] along axis 1", test19);
+
+
+        // ============================================================
+        // TEST 20: Mean along axis 0 with keepdim
+        // -> shape [1, 3]
+        // ============================================================
+
+        Tensor AV = AS.mean(0, true);
+
+        bool test20 =
+            AV({0,0}) == 2.5 &&
+            AV({0,1}) == 3.5 &&
+            AV({0,2}) == 4.5;
+
+        printTest("Mean [2,3] along axis 0 (keepdim)", test20);
+
+
+        // ============================================================
+        // TEST 21: Invalid mean axis
+        // ============================================================
+
+        bool test21 = false;
+
+        try
+        {
+            Tensor AW({2,3,4});
+            Tensor AX = AW.mean(3);
+        }
+        catch (const std::out_of_range&)
+        {
+            test21 = true;
+        }
+
+        printTest("Reject invalid mean axis", test21);
+
+
+        // ============================================================
+        // TEST 22: Mean of zero-sized axis
+        // ============================================================
+
+        bool test22 = false;
+
+        try
+        {
+            Tensor AY({2,0,4});
+            Tensor AZ = AY.mean(1);
+        }
+        catch (const std::invalid_argument&)
+        {
+            test22 = true;
+        }
+
+        printTest("Reject mean of zero-sized axis", test22);
+
+
         std::cout << "\nAll tests completed.\n";
     }
     catch (const std::exception& e)
