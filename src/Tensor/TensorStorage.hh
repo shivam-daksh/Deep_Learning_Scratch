@@ -124,22 +124,22 @@ class Tensor {
             }
         }
 
-        std::vector<size_t> broadcastShape(const Tensor& a, const Tensor& b) const{
+        std::vector<size_t> broadcastShape(const std::vector<size_t>& a, const std::vector<size_t>& b) const{
             // check if any of them is scalar
-            if(a.shape.size() == 0) return b.shape;
-            if(b.shape.size() == 0) return a.shape;
+            if(a.size() == 0) return b;
+            if(b.size() == 0) return a;
 
-            if(a.shape.size() > b.shape.size()){
-                size_t offset = a.shape.size() - b.shape.size();
+            if(a.size() > b.size()){
+                size_t offset = a.size() - b.size();
                 std::vector<size_t> res;
-                for(int i = b.shape.size() - 1; i >=0; i--){
-                    if((b.shape[i] == a.shape[offset + i]) || (b.shape[i] == 1) || (a.shape[offset + i] == 1)){
-                        if(b.shape[i] == a.shape[offset + i]){
-                            res.push_back(b.shape[i]);
-                        } else if(b.shape[i] == 1) {
-                            res.push_back(a.shape[offset + i]);
+                for(int i = b.size() - 1; i >=0; i--){
+                    if((b[i] == a[offset + i]) || (b[i] == 1) || (a[offset + i] == 1)){
+                        if(b[i] == a[offset + i]){
+                            res.push_back(b[i]);
+                        } else if(b[i] == 1) {
+                            res.push_back(a[offset + i]);
                         } else {
-                            res.push_back(b.shape[i]);
+                            res.push_back(b[i]);
                         }
 
                     } else {
@@ -148,22 +148,22 @@ class Tensor {
                 }
                 if(offset > 0){
                     for(int i = offset-1; i >=0; i--){
-                        res.push_back(a.shape[i]);
+                        res.push_back(a[i]);
                     }
                 }
                 std::reverse(res.begin(), res.end());
                 return res;
             } else {
-                size_t offset = b.shape.size() - a.shape.size();
+                size_t offset = b.size() - a.size();
                 std::vector<size_t> res;
-                for(int i = a.shape.size() - 1; i >=0; i--){
-                    if((a.shape[i] == b.shape[offset + i]) || (a.shape[i] == 1) || (b.shape[offset + i] == 1)){
-                        if(b.shape[i + offset] == a.shape[i]){
-                            res.push_back(b.shape[i+offset]);
-                        } else if(b.shape[i] == 1) {
-                            res.push_back(a.shape[i]);
+                for(int i = a.size() - 1; i >=0; i--){
+                    if((a[i] == b[offset + i]) || (a[i] == 1) || (b[offset + i] == 1)){
+                        if(b[i + offset] == a[i]){
+                            res.push_back(b[i+offset]);
+                        } else if(b[i] == 1) {
+                            res.push_back(a[i]);
                         } else {
-                            res.push_back(b.shape[offset + i]);
+                            res.push_back(b[offset + i]);
                         }
                     } else {
                         throw std::invalid_argument("Tensor shapes must be compatible for broadcasting");
@@ -172,7 +172,7 @@ class Tensor {
 
                 if(offset > 0){
                     for(int i = offset - 1; i >=0; i--){
-                        res.push_back(b.shape[i]);
+                        res.push_back(b[i]);
                     }
                 }
 
@@ -180,6 +180,7 @@ class Tensor {
                 return res;
             }
         }
+
 
         std::vector<size_t> broadcastIndex(const std::vector<size_t>& outputIndex, const Tensor& tensor) const {
             size_t n = tensor.shape.size();
@@ -226,7 +227,7 @@ class Tensor {
                 return res;
 
             } else if(areBroadcastCompatible(*this, other)){
-                std::vector<size_t> outputShape = this->broadcastShape(*this, other);
+                std::vector<size_t> outputShape = this->broadcastShape(this->shape, other.shape);
                 
                 res.resize(outputShape);
                 for(size_t i = 0; i < res.size; i++){
@@ -266,7 +267,7 @@ class Tensor {
                 return res;
 
             } else if(areBroadcastCompatible(*this, other)){
-                std::vector<size_t> outputShape = this->broadcastShape(*this, other);
+                std::vector<size_t> outputShape = this->broadcastShape(this->shape, other.shape);
                 
                 res.resize(outputShape);
                 for(size_t i = 0; i < res.size; i++){
@@ -305,7 +306,7 @@ class Tensor {
                 return res;
 
             } else if(areBroadcastCompatible(*this, other)){
-                std::vector<size_t> outputShape = this->broadcastShape(*this, other);
+                std::vector<size_t> outputShape = this->broadcastShape(this->shape, other.shape);
                 
                 res.resize(outputShape);
                 for(size_t i = 0; i < res.size; i++){
@@ -351,7 +352,7 @@ class Tensor {
                 return res;
 
             } else if(areBroadcastCompatible(*this, other)){
-                std::vector<size_t> outputShape = this->broadcastShape(*this, other);
+                std::vector<size_t> outputShape = this->broadcastShape(this->shape, other.shape);
 
                 res.resize(outputShape);
 
@@ -394,7 +395,7 @@ class Tensor {
             return this->transpose();
         }
 
-        Tensor sum(size_t axis =  0, bool keepdim=false) const {
+        Tensor sum(const size_t axis =  0, const bool keepdim=false) const {
             if(axis >= this->shape.size()) throw std::out_of_range("Axis (index) out of the bound of the shape");
             // if(this->shape[axis] == 0) throw std::invalid_argument("Zero axis can't be reduced");
             
@@ -440,7 +441,7 @@ class Tensor {
 
         }
 
-        Tensor mean(size_t axis = 0, bool keepdim = false) const {
+        Tensor mean(const size_t axis = 0, const bool keepdim = false) const {
             if(axis >= this->shape.size())
                 throw std::out_of_range(
                     "Axis (index) out of the bound of the shape"
@@ -461,5 +462,110 @@ class Tensor {
 
             return res;
         }
-        
+
+        // order matters, hence A.matmul(other) is equivalent to A X B
+        Tensor matmul(const Tensor& other) const {
+
+            // Both tensors must have at least 2 dimensions
+            if(this->shape.size() < 2 || other.shape.size() < 2) {
+                throw std::invalid_argument(
+                    "matmul requires both tensors to have at least 2 dimensions"
+                );
+            }
+
+            // A: [..., M, K]
+            // B: [..., K, N]
+
+            size_t M = this->shape[this->shape.size() - 2];
+            size_t K = this->shape[this->shape.size() - 1];
+
+            size_t otherK = other.shape[other.shape.size() - 2];
+            size_t N = other.shape[other.shape.size() - 1];
+
+            // Contracting dimensions must match
+            if(K != otherK) {
+                throw std::invalid_argument(
+                    "Incompatible dimensions for matrix multiplication"
+                );
+            }
+
+            // Extract batch shapes
+            std::vector<size_t> thisBatchShape(
+                this->shape.begin(),
+                this->shape.end() - 2
+            );
+
+            std::vector<size_t> otherBatchShape(
+                other.shape.begin(),
+                other.shape.end() - 2
+            );
+
+            // Find output batch shape
+            std::vector<size_t> outputBatchShape =
+                this->broadcastShape(thisBatchShape, otherBatchShape);
+
+            // Output shape = broadcasted batch shape + [M,N]
+            std::vector<size_t> outputShape = outputBatchShape;
+            outputShape.push_back(M);
+            outputShape.push_back(N);
+
+            Tensor result(outputShape);
+
+            // Number of matrices in the output batch
+            size_t batchSize = 1;
+
+            for(size_t dim : outputBatchShape) {
+                batchSize *= dim;
+            }
+
+            // For every output matrix
+            for(size_t batch = 0; batch < batchSize; batch++) {
+
+                // Convert linear batch index → batch coordinates
+                std::vector<size_t> batchIndex =
+                    this->returnIndex(batch, outputBatchShape);
+
+                // Map output batch coordinates to each input tensor
+                std::vector<size_t> thisBatchIndex =
+                    this->broadcastIndex(batchIndex, thisBatchShape);
+
+                std::vector<size_t> otherBatchIndex =
+                    this->broadcastIndex(batchIndex, otherBatchShape);
+
+                // Perform ordinary matrix multiplication
+                for(size_t i = 0; i < M; i++) {
+
+                    for(size_t j = 0; j < N; j++) {
+
+                        for(size_t k = 0; k < K; k++) {
+
+                            // Build A index
+                            std::vector<size_t> thisIndex = thisBatchIndex;
+
+                            thisIndex.push_back(i);
+                            thisIndex.push_back(k);
+
+                            // Build B index
+                            std::vector<size_t> otherIndex = otherBatchIndex;
+
+                            otherIndex.push_back(k);
+                            otherIndex.push_back(j);
+
+                            // Build output index
+                            std::vector<size_t> resultIndex =
+                                batchIndex;
+
+                            resultIndex.push_back(i);
+                            resultIndex.push_back(j);
+
+                            result(resultIndex) += (*this)(thisIndex) * other(otherIndex);
+                        }
+                    }
+                }
+            }
+
+            return result;
+        }
+
+
 };
