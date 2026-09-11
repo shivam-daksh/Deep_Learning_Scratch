@@ -588,6 +588,263 @@ int main()
         printTest("Reject mean of zero-sized axis", test22);
 
 
+        // ============================================================
+        // TEST 23: 2D Matrix Multiplication
+        // [2, 3] x [3, 2] -> [2, 2]
+        // ============================================================
+
+        Tensor BA({2, 3});
+        Tensor BB({3, 2});
+
+        BA({0,0}) = 1; BA({0,1}) = 2; BA({0,2}) = 3;
+        BA({1,0}) = 4; BA({1,1}) = 5; BA({1,2}) = 6;
+
+        BB({0,0}) = 7; BB({0,1}) = 8;
+        BB({1,0}) = 9; BB({1,1}) = 10;
+        BB({2,0}) = 11; BB({2,1}) = 12;
+
+        Tensor BC = BA.matmul(BB);
+
+        bool test23 =
+            BC({0,0}) == 58 &&
+            BC({0,1}) == 64 &&
+            BC({1,0}) == 139 &&
+            BC({1,1}) == 154;
+
+        printTest("2D Matrix Multiplication [2,3] x [3,2]", test23);
+
+
+        // ============================================================
+        // TEST 24: Broadcasted Batch Matrix Multiplication
+        // [2, 2, 3] x [3, 2] -> [2, 2, 2]
+        // ============================================================
+
+        Tensor BD({2, 2, 3});
+        Tensor BE({3, 2});
+
+        BE({0,0}) = 7; BE({0,1}) = 8;
+        BE({1,0}) = 9; BE({1,1}) = 10;
+        BE({2,0}) = 11; BE({2,1}) = 12;
+
+        BD({0,0,0}) = 1; BD({0,0,1}) = 2; BD({0,0,2}) = 3;
+        BD({0,1,0}) = 4; BD({0,1,1}) = 5; BD({0,1,2}) = 6;
+
+        BD({1,0,0}) = 2; BD({1,0,1}) = 4; BD({1,0,2}) = 6;
+        BD({1,1,0}) = 8; BD({1,1,1}) = 10; BD({1,1,2}) = 12;
+
+        Tensor BF = BD.matmul(BE);
+
+        bool test24 =
+            BF({0,0,0}) == 58 &&
+            BF({0,0,1}) == 64 &&
+            BF({0,1,0}) == 139 &&
+            BF({0,1,1}) == 154 &&
+            BF({1,0,0}) == 116 &&
+            BF({1,0,1}) == 128 &&
+            BF({1,1,0}) == 278 &&
+            BF({1,1,1}) == 308;
+
+        printTest("Broadcasted Batch Matmul [2,2,3] x [3,2]", test24);
+
+
+        // ============================================================
+        // TEST 25: Invalid Matrix Multiplication (dimension mismatch)
+        // [2, 3] x [4, 2]
+        // ============================================================
+
+        bool test25 = false;
+        try
+        {
+            Tensor BG({2, 3});
+            Tensor BH({4, 2});
+            Tensor BI = BG.matmul(BH);
+        }
+        catch (const std::invalid_argument&)
+        {
+            test25 = true;
+        }
+
+        printTest("Reject invalid matmul (inner dimension mismatch)", test25);
+
+
+        // ============================================================
+        // TEST 26: Matmul requires at least 2 dimensions
+        // [3] x [3]
+        // ============================================================
+
+        bool test26 = false;
+        try
+        {
+            Tensor BJ({3});
+            Tensor BK({3});
+            Tensor BL = BJ.matmul(BK);
+        }
+        catch (const std::invalid_argument&)
+        {
+            test26 = true;
+        }
+
+        printTest("Reject matmul with < 2 dimensions", test26);
+
+
+        // ============================================================
+        // TEST 27: 3D x 3D Batch Matmul (Same Batch Size)
+        // [2, 2, 3] x [2, 3, 2] -> [2, 2, 2]
+        // ============================================================
+        
+        Tensor BM({2, 2, 3});
+        Tensor BN({2, 3, 2});
+
+        // Batch 0
+        BM({0,0,0}) = 1; BM({0,0,1}) = 2; BM({0,0,2}) = 3;
+        BM({0,1,0}) = 4; BM({0,1,1}) = 5; BM({0,1,2}) = 6;
+
+        BN({0,0,0}) = 7; BN({0,0,1}) = 8;
+        BN({0,1,0}) = 9; BN({0,1,1}) = 10;
+        BN({0,2,0}) = 11; BN({0,2,1}) = 12;
+
+        // Batch 1
+        BM({1,0,0}) = 1; BM({1,0,1}) = 0; BM({1,0,2}) = 0;
+        BM({1,1,0}) = 0; BM({1,1,1}) = 1; BM({1,1,2}) = 0;
+
+        BN({1,0,0}) = 1; BN({1,0,1}) = 2;
+        BN({1,1,0}) = 3; BN({1,1,1}) = 4;
+        BN({1,2,0}) = 5; BN({1,2,1}) = 6;
+
+        Tensor BO = BM.matmul(BN);
+
+        bool test27 =
+            // Batch 0
+            BO({0,0,0}) == 58 &&
+            BO({0,0,1}) == 64 &&
+            BO({0,1,0}) == 139 &&
+            BO({0,1,1}) == 154 &&
+            // Batch 1
+            BO({1,0,0}) == 1 &&
+            BO({1,0,1}) == 2 &&
+            BO({1,1,0}) == 3 &&
+            BO({1,1,1}) == 4;
+
+        printTest("3D x 3D Batch Matmul [2,2,3] x [2,3,2]", test27);
+
+
+        // ============================================================
+        // TEST 28: 2D x 3D Broadcasted Batch Matmul
+        // [2, 3] x [2, 3, 2] -> [2, 2, 2]
+        // ============================================================
+        
+        Tensor BP({2, 3});
+        Tensor BQ({2, 3, 2});
+
+        BP({0,0}) = 1; BP({0,1}) = 0; BP({0,2}) = 0;
+        BP({1,0}) = 0; BP({1,1}) = 1; BP({1,2}) = 0;
+
+        // Batch 0
+        BQ({0,0,0}) = 7; BQ({0,0,1}) = 8;
+        BQ({0,1,0}) = 9; BQ({0,1,1}) = 10;
+        BQ({0,2,0}) = 11; BQ({0,2,1}) = 12;
+
+        // Batch 1
+        BQ({1,0,0}) = 1; BQ({1,0,1}) = 2;
+        BQ({1,1,0}) = 3; BQ({1,1,1}) = 4;
+        BQ({1,2,0}) = 5; BQ({1,2,1}) = 6;
+
+        Tensor BR = BP.matmul(BQ);
+
+        bool test28 =
+            // Batch 0
+            BR({0,0,0}) == 7 &&
+            BR({0,0,1}) == 8 &&
+            BR({0,1,0}) == 9 &&
+            BR({0,1,1}) == 10 &&
+            // Batch 1
+            BR({1,0,0}) == 1 &&
+            BR({1,0,1}) == 2 &&
+            BR({1,1,0}) == 3 &&
+            BR({1,1,1}) == 4;
+
+        printTest("2D x 3D Broadcast Matmul [2,3] x [2,3,2]", test28);
+
+
+        // ============================================================
+        // TEST 29: Incompatible batch dimensions
+        // [2, 2, 3] x [3, 3, 2]
+        // ============================================================
+        
+        bool test29 = false;
+        try
+        {
+            Tensor BS({2, 2, 3});
+            Tensor BT({3, 3, 2});
+            Tensor BU = BS.matmul(BT);
+        }
+        catch (const std::invalid_argument&)
+        {
+            test29 = true;
+        }
+
+        printTest("Reject matmul with incompatible batch dims", test29);
+
+
+        // ============================================================
+        // TEST 30: Complex Batch Broadcasting
+        // [2, 1, 2, 3] x [4, 3, 2] -> [2, 4, 2, 2]
+        // ============================================================
+        
+        Tensor BV({2, 1, 2, 3});
+        Tensor BW({4, 3, 2});
+
+        for (size_t b1 = 0; b1 < 2; ++b1)
+            for (size_t b2 = 0; b2 < 1; ++b2)
+                for (size_t i = 0; i < 2; ++i)
+                    for (size_t j = 0; j < 3; ++j)
+                        BV({b1, b2, i, j}) = 1.0;
+
+        for (size_t b1 = 0; b1 < 4; ++b1)
+            for (size_t i = 0; i < 3; ++i)
+                for (size_t j = 0; j < 2; ++j)
+                    BW({b1, i, j}) = 2.0;
+
+        Tensor BX = BV.matmul(BW);
+
+        bool test30 = true;
+        try {
+            for (size_t b1 = 0; b1 < 2; ++b1) {
+                for (size_t b2 = 0; b2 < 4; ++b2) {
+                    for (size_t i = 0; i < 2; ++i) {
+                        for (size_t j = 0; j < 2; ++j) {
+                            if (BX({b1, b2, i, j}) != 6.0) {
+                                test30 = false;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Check out of bounds to confirm shape
+            bool outOfBoundsThrown = false;
+            try {
+                BX({2, 0, 0, 0});
+            } catch (const std::out_of_range&) {
+                outOfBoundsThrown = true;
+            }
+            if (!outOfBoundsThrown) test30 = false;
+
+            outOfBoundsThrown = false;
+            try {
+                BX({0, 4, 0, 0});
+            } catch (const std::out_of_range&) {
+                outOfBoundsThrown = true;
+            }
+            if (!outOfBoundsThrown) test30 = false;
+            
+        } catch (...) {
+            test30 = false;
+        }
+
+        printTest("Complex Broadcast Matmul [2,1,2,3] x [4,3,2]", test30);
+
+
         std::cout << "\nAll tests completed.\n";
     }
     catch (const std::exception& e)
