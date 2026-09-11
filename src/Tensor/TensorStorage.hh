@@ -2,34 +2,37 @@
 #include <algorithm>
 #include <vector>
 #include <stdexcept>
+
+template <typename T>
 class TensorStorage {
     private:
-        std::vector<double> buffer;
+        std::vector<T> buffer;
     public:
         TensorStorage(){
 
         }
         void resize(size_t arraySize){
             this->buffer.resize(arraySize);
-            for(size_t i = 0; i < arraySize; i++){
-                this->buffer[i] = 0.0;
-            }
+            // for(size_t i = 0; i < arraySize; i++){
+            //     this->buffer[i] = (double)0;
+            // }
         }
 
-        double& operator[](const size_t index){
+        T& operator[](const size_t index){
             if(index >= buffer.size()) throw std::out_of_range("Tensor index out of bounds");
             return this->buffer[index];
         }
 
-        const double& operator[](const size_t index) const{
+        const T& operator[](const size_t index) const{
             if(index >= buffer.size()) throw std::out_of_range("Tensor index out of bounds");
             return this->buffer[index];
         }
 };
 
+template <typename T>
 class Tensor {
     private:
-        TensorStorage storage;
+        TensorStorage<T> storage;
         std::vector<size_t> shape;
         std::vector<size_t> stride;
         size_t size;
@@ -71,7 +74,7 @@ class Tensor {
             }
         }
         
-        double& operator()(const std::vector<size_t>&indices){
+        T& operator()(const std::vector<size_t>&indices){
             // bound checking
             if(indices.size() != this->shape.size()) throw std::invalid_argument("Incorrect number of indices");
             for(size_t i = 0; i < indices.size(); i++) if(indices[i] >= this->shape[i]) throw std::out_of_range("Tensor index out of bounds");
@@ -84,7 +87,7 @@ class Tensor {
             return this->storage[index];
         }
         
-        const double& operator()(const std::vector<size_t>&indices) const{
+        const T& operator()(const std::vector<size_t>&indices) const{
             // bound checking
             if(indices.size() != this->shape.size()) throw std::invalid_argument("Incorrect number of indices");
             for(size_t i = 0; i < indices.size(); i++) if(indices[i] >= this->shape[i]) throw std::out_of_range("Tensor index out of bounds");
@@ -342,7 +345,7 @@ class Tensor {
                 res.resize(this->shape);
 
                 for(size_t i = 0; i < this->size; i++){
-                    if(other.storage[i] == 0.0){
+                    if(other.storage[i] == (double)0){
                         throw std::domain_error("Division by zero");
                     }
 
@@ -366,9 +369,9 @@ class Tensor {
                     std::vector<size_t> otherIndex =
                         this->broadcastIndex(indices, other);
 
-                    double denominator = other(otherIndex);
+                    T denominator = other(otherIndex);
 
-                    if(denominator == 0.0){
+                    if(denominator == (double)0){
                         throw std::domain_error("Division by zero");
                     }
 
