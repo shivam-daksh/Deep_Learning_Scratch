@@ -1,3 +1,6 @@
+/*
+clang++ -std=c++17 test.cpp -framework OpenCL -o opencl_test
+*/
 #define CL_SILENCE_DEPRECATION // Silences macOS deprecation warnings
 #include <OpenCL/opencl.h>     // Note the OpenCL/ prefix for macOS
 #include <iostream>
