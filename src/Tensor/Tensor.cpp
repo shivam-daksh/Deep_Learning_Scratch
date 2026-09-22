@@ -1,48 +1,41 @@
-// Tensor Storage
-#include <algorithm>
-#include <vector>
-#include <stdexcept>
+#include "Tensor.hh"
+#include <iostream>
 
-template <typename T>
-class TensorStorage {
-    private:
-        std::vector<T> buffer;
-    public:
-        TensorStorage(){
+template <typename DType>
+TensorStorage<DType>::TensorStorage() {
 
         }
-        void resize(size_t arraySize){
+
+template <typename DType>
+void TensorStorage<DType>::resize(size_t arraySize) {
             this->buffer.resize(arraySize);
             // for(size_t i = 0; i < arraySize; i++){
             //     this->buffer[i] = (double)0;
             // }
         }
 
-        T& operator[](const size_t index){
+template <typename DType>
+DType& TensorStorage<DType>::operator[](const size_t index) {
             if(index >= buffer.size()) throw std::out_of_range("Tensor index out of bounds");
             return this->buffer[index];
         }
 
-        const T& operator[](const size_t index) const{
+template <typename DType>
+const DType& TensorStorage<DType>::operator[](const size_t index) const {
             if(index >= buffer.size()) throw std::out_of_range("Tensor index out of bounds");
             return this->buffer[index];
         }
-};
 
-template <typename T>
-class Tensor {
-    private:
-        TensorStorage<T> storage;
-        std::vector<size_t> shape;
-        std::vector<size_t> stride;
-        size_t size;
-    public:
-        Tensor(){}
-        Tensor(const std::vector<size_t> &shape){
+template <typename DType>
+Tensor<DType>::Tensor() {}
+
+template <typename DType>
+Tensor<DType>::Tensor(const std::vector<size_t> &shape) {
             this->resize(shape);
         }
 
-        void resize(const std::vector<size_t> shape){
+template <typename DType>
+void Tensor<DType>::resize(const std::vector<size_t> shape) {
             this->shape = shape;
             size_t arraySize = 1;
             for(size_t i = 0; i < shape.size(); i++){
@@ -73,8 +66,17 @@ class Tensor {
                 }
             }
         }
-        
-        T& operator()(const std::vector<size_t>&indices){
+
+template <typename DType>
+Tensor<DType>& Tensor<DType>::fill(const DType& value) {
+            for(size_t i = 0; i < this->size; i++) {
+                this->storage[i] = value;
+            }
+            return *this;
+        }
+
+template <typename DType>
+DType& Tensor<DType>::operator()(const std::vector<size_t>&indices) {
             // bound checking
             if(indices.size() != this->shape.size()) throw std::invalid_argument("Incorrect number of indices");
             for(size_t i = 0; i < indices.size(); i++) if(indices[i] >= this->shape[i]) throw std::out_of_range("Tensor index out of bounds");
@@ -86,8 +88,9 @@ class Tensor {
 
             return this->storage[index];
         }
-        
-        const T& operator()(const std::vector<size_t>&indices) const{
+
+template <typename DType>
+const DType& Tensor<DType>::operator()(const std::vector<size_t>&indices) const {
             // bound checking
             if(indices.size() != this->shape.size()) throw std::invalid_argument("Incorrect number of indices");
             for(size_t i = 0; i < indices.size(); i++) if(indices[i] >= this->shape[i]) throw std::out_of_range("Tensor index out of bounds");
@@ -99,13 +102,15 @@ class Tensor {
             return this->storage[index];
         }
 
-        bool areShapesEqual(const std::vector<size_t>&a, const std::vector<size_t>&b)const {
+template <typename DType>
+bool Tensor<DType>::areShapesEqual(const std::vector<size_t>&a, const std::vector<size_t>&b) const {
             if(a.size() != b.size()) return false;
             for(int i = 0; i < a.size(); i++) if(a[i] != b[i]) return false;
             return true;
         }
 
-        bool areBroadcastCompatible(const Tensor& a, const Tensor& b) const {
+template <typename DType>
+bool Tensor<DType>::areBroadcastCompatible(const Tensor<DType>& a, const Tensor<DType>& b) const {
             int offset = 0;
             int n = 0;
             if(a.shape.size() > b.shape.size()){
@@ -127,7 +132,8 @@ class Tensor {
             }
         }
 
-        std::vector<size_t> broadcastShape(const std::vector<size_t>& a, const std::vector<size_t>& b) const{
+template <typename DType>
+std::vector<size_t> Tensor<DType>::broadcastShape(const std::vector<size_t>& a, const std::vector<size_t>& b) const {
             // check if any of them is scalar
             if(a.size() == 0) return b;
             if(b.size() == 0) return a;
@@ -184,8 +190,8 @@ class Tensor {
             }
         }
 
-
-        std::vector<size_t> broadcastIndex(const std::vector<size_t>& outputIndex, const Tensor& tensor) const {
+template <typename DType>
+std::vector<size_t> Tensor<DType>::broadcastIndex(const std::vector<size_t>& outputIndex, const Tensor<DType>& tensor) const {
             size_t n = tensor.shape.size();
             size_t offset = 0;
             if(outputIndex.size() > n) offset = outputIndex.size() - n; //outputIndex size couldn't be smaller than the given tensor because outputIndex will always have the dimensions equal to the highest dimension tensor.
@@ -203,7 +209,8 @@ class Tensor {
             return res;
         }
 
-        std::vector<size_t> returnIndex(size_t index, const std::vector<size_t>& shape) const {
+template <typename DType>
+std::vector<size_t> Tensor<DType>::returnIndex(size_t index, const std::vector<size_t>& shape) const {
             std::vector<size_t> indices(shape.size(),0);
 
             for(int i = shape.size() - 1; i >= 0; i--){
@@ -215,8 +222,9 @@ class Tensor {
 
             return indices;
         }
-        // Element-wise Addition
-        Tensor operator+(const Tensor& other) const{
+
+template <typename DType>
+Tensor<DType> Tensor<DType>::operator+(const Tensor<DType>& other) const {
             Tensor res;
             //check the shape
             // if(this->shape.size() != other.shape.size()) throw std::invalid_argument("Tensor size must match for addition");
@@ -256,9 +264,9 @@ class Tensor {
                 throw std::invalid_argument("Tensors shape are invalid for addition");
             }
         }
-        
-        // Element-wise Subtraction
-        Tensor operator-(const Tensor& other) const{
+
+template <typename DType>
+Tensor<DType> Tensor<DType>::operator-(const Tensor<DType>& other) const {
             Tensor res;
             if(this->areShapesEqual(this->shape, other.shape)){
                 res.resize(this->shape);
@@ -297,7 +305,8 @@ class Tensor {
             }
         }
 
-        Tensor operator*(const Tensor& other) const{
+template <typename DType>
+Tensor<DType> Tensor<DType>::operator*(const Tensor<DType>& other) const {
             Tensor res;
 
             if(this->areShapesEqual(this->shape, other.shape)){
@@ -336,9 +345,8 @@ class Tensor {
             }
         }
 
-
-
-        Tensor operator/(const Tensor& other) const{
+template <typename DType>
+Tensor<DType> Tensor<DType>::operator/(const Tensor<DType>& other) const {
             Tensor res;
 
             if(this->areShapesEqual(this->shape, other.shape)){
@@ -369,7 +377,7 @@ class Tensor {
                     std::vector<size_t> otherIndex =
                         this->broadcastIndex(indices, other);
 
-                    T denominator = other(otherIndex);
+                    DType denominator = other(otherIndex);
 
                     if(denominator == (double)0){
                         throw std::domain_error("Division by zero");
@@ -388,17 +396,20 @@ class Tensor {
             }
         }
 
-        Tensor transpose() {
+template <typename DType>
+Tensor<DType> Tensor<DType>::transpose() {
             std::reverse(this->shape.begin(), this->shape.end());
             std::reverse(this->stride.begin(), this->stride.end());
             return *this;
         }
 
-        Tensor T() {
+template <typename DType>
+Tensor<DType> Tensor<DType>::T() {
             return this->transpose();
         }
 
-        Tensor sum(const size_t axis =  0, const bool keepdim=false) const {
+template <typename DType>
+Tensor<DType> Tensor<DType>::sum(const size_t axis, const bool keepdim) const {
             if(axis >= this->shape.size()) throw std::out_of_range("Axis (index) out of the bound of the shape");
             // if(this->shape[axis] == 0) throw std::invalid_argument("Zero axis can't be reduced");
             
@@ -444,7 +455,8 @@ class Tensor {
 
         }
 
-        Tensor mean(const size_t axis = 0, const bool keepdim = false) const {
+template <typename DType>
+Tensor<DType> Tensor<DType>::mean(const size_t axis, const bool keepdim) const {
             if(axis >= this->shape.size())
                 throw std::out_of_range(
                     "Axis (index) out of the bound of the shape"
@@ -466,8 +478,8 @@ class Tensor {
             return res;
         }
 
-        // order matters, hence A.matmul(other) is equivalent to A X B
-        Tensor matmul(const Tensor& other) const {
+template <typename DType>
+Tensor<DType> Tensor<DType>::matmul(const Tensor<DType>& other) const {
 
             // Both tensors must have at least 2 dimensions
             if(this->shape.size() < 2 || other.shape.size() < 2) {
@@ -571,4 +583,7 @@ class Tensor {
         }
 
 
-};
+template class TensorStorage<double>;
+template class TensorStorage<float>;
+template class Tensor<double>;
+template class Tensor<float>;

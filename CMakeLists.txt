@@ -9,6 +9,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(tensor_test
     src/tests/TensorTests.cpp
+    src/Tensor/Tensor.cpp
 )
 
 target_include_directories(tensor_test PRIVATE

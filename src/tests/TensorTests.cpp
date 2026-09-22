@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "Tensor/TensorStorage.hh"
+#include "Tensor/Tensor.hh"
 
 
 void printTest(const std::string& name, bool passed)
@@ -22,8 +22,8 @@ int main()
         // [2,3] + [2,3]
         // ============================================================
 
-        Tensor A({2, 3});
-        Tensor B({2, 3});
+        Tensor<double> A({2, 3});
+        Tensor<double> B({2, 3});
 
         A({0,0}) = 1;
         A({0,1}) = 2;
@@ -39,7 +39,7 @@ int main()
         B({1,1}) = 50;
         B({1,2}) = 60;
 
-        Tensor C = A + B;
+        Tensor<double> C = A + B;
 
         bool test1 =
             C({0,0}) == 11 &&
@@ -57,8 +57,8 @@ int main()
         // [2,1] + [1,3]
         // ============================================================
 
-        Tensor D({2, 1});
-        Tensor E({1, 3});
+        Tensor<double> D({2, 1});
+        Tensor<double> E({1, 3});
 
         D({0,0}) = 10;
         D({1,0}) = 20;
@@ -67,7 +67,7 @@ int main()
         E({0,1}) = 2;
         E({0,2}) = 3;
 
-        Tensor F = D + E;
+        Tensor<double> F = D + E;
 
         bool test2 =
             F({0,0}) == 11 &&
@@ -85,8 +85,8 @@ int main()
         // [2,3] + [3]
         // ============================================================
 
-        Tensor G({2, 3});
-        Tensor H({3});
+        Tensor<double> G({2, 3});
+        Tensor<double> H({3});
 
         G({0,0}) = 1;
         G({0,1}) = 2;
@@ -99,7 +99,7 @@ int main()
         H({1}) = 20;
         H({2}) = 30;
 
-        Tensor I = G + H;
+        Tensor<double> I = G + H;
 
         bool test3 =
             I({0,0}) == 11 &&
@@ -117,8 +117,8 @@ int main()
         // [2,3,4] + [3,4]
         // ============================================================
 
-        Tensor J({2, 3, 4});
-        Tensor K({3, 4});
+        Tensor<double> J({2, 3, 4});
+        Tensor<double> K({3, 4});
 
         for (size_t i = 0; i < 2; ++i)
             for (size_t j = 0; j < 3; ++j)
@@ -129,7 +129,7 @@ int main()
             for (size_t j = 0; j < 4; ++j)
                 K({i,j}) = 10;
 
-        Tensor L = J + K;
+        Tensor<double> L = J + K;
 
         bool test4 =
             L({0,0,0}) == 11 &&
@@ -145,8 +145,8 @@ int main()
         // [2,1] - [1,3]
         // ============================================================
 
-        Tensor M({2,1});
-        Tensor N({1,3});
+        Tensor<double> M({2,1});
+        Tensor<double> N({1,3});
 
         M({0,0}) = 10;
         M({1,0}) = 20;
@@ -155,7 +155,7 @@ int main()
         N({0,1}) = 2;
         N({0,2}) = 3;
 
-        Tensor O = M - N;
+        Tensor<double> O = M - N;
 
         bool test5 =
             O({0,0}) == 9 &&
@@ -173,14 +173,14 @@ int main()
         // [2,3] + [2,4]
         // ============================================================
 
-        Tensor P({2,3});
-        Tensor Q({2,4});
+        Tensor<double> P({2,3});
+        Tensor<double> Q({2,4});
 
         bool test6 = false;
 
         try
         {
-            Tensor R = P + Q;
+            Tensor<double> R = P + Q;
         }
         catch (const std::invalid_argument&)
         {
@@ -194,8 +194,8 @@ int main()
         // TEST 7: Scalar + tensor
         // ============================================================
 
-        Tensor scalar(std::vector<size_t>{});
-        Tensor S({2,3});
+        Tensor<double> scalar(std::vector<size_t>{});
+        Tensor<double> S({2,3});
 
         scalar(std::vector<size_t>{}) = 5;
 
@@ -203,7 +203,7 @@ int main()
             for (size_t j = 0; j < 3; ++j)
                 S({i,j}) = static_cast<double>(i * 3 + j);
 
-        Tensor T = scalar + S;
+        Tensor<double> T = scalar + S;
 
         bool test7 =
             T({0,0}) == 5 &&
@@ -220,8 +220,8 @@ int main()
         // TEST 8: Same-shape element-wise multiplication
         // ============================================================
 
-        Tensor U({2,3});
-        Tensor V({2,3});
+        Tensor<double> U({2,3});
+        Tensor<double> V({2,3});
 
         for (size_t i = 0; i < 2; ++i)
             for (size_t j = 0; j < 3; ++j)
@@ -234,7 +234,7 @@ int main()
         V({1,1}) = 50;
         V({1,2}) = 60;
 
-        Tensor W = U * V;
+        Tensor<double> W = U * V;
 
         bool test8 =
             W({0,0}) == 10 &&
@@ -252,8 +252,8 @@ int main()
         // [2,3] * [3]
         // ============================================================
 
-        Tensor X({2,3});
-        Tensor Y({3});
+        Tensor<double> X({2,3});
+        Tensor<double> Y({3});
 
         X({0,0}) = 1;
         X({0,1}) = 2;
@@ -266,7 +266,7 @@ int main()
         Y({1}) = 20;
         Y({2}) = 30;
 
-        Tensor Z = X * Y;
+        Tensor<double> Z = X * Y;
 
         bool test9 =
             Z({0,0}) == 10 &&
@@ -283,8 +283,8 @@ int main()
         // TEST 10: Same-shape division
         // ============================================================
 
-        Tensor AA({2,3});
-        Tensor AB({2,3});
+        Tensor<double> AA({2,3});
+        Tensor<double> AB({2,3});
 
         AA({0,0}) = 10;
         AA({0,1}) = 20;
@@ -300,7 +300,7 @@ int main()
         AB({1,1}) = 10;
         AB({1,2}) = 20;
 
-        Tensor AC = AA / AB;
+        Tensor<double> AC = AA / AB;
 
         bool test10 =
             AC({0,0}) == 5 &&
@@ -318,8 +318,8 @@ int main()
         // [2,3] / [3]
         // ============================================================
 
-        Tensor AD({2,3});
-        Tensor AE({3});
+        Tensor<double> AD({2,3});
+        Tensor<double> AE({3});
 
         AD({0,0}) = 10;
         AD({0,1}) = 20;
@@ -332,7 +332,7 @@ int main()
         AE({1}) = 5;
         AE({2}) = 10;
 
-        Tensor AF = AD / AE;
+        Tensor<double> AF = AD / AE;
 
         bool test11 =
             AF({0,0}) == 5 &&
@@ -349,8 +349,8 @@ int main()
         // TEST 12: Division by zero
         // ============================================================
 
-        Tensor AG({3});
-        Tensor AH({3});
+        Tensor<double> AG({3});
+        Tensor<double> AH({3});
 
         AG({0}) = 10;
         AG({1}) = 20;
@@ -364,7 +364,7 @@ int main()
 
         try
         {
-            Tensor AI = AG / AH;
+            Tensor<double> AI = AG / AH;
         }
         catch (const std::domain_error&)
         {
@@ -384,7 +384,7 @@ int main()
         // -> [5 7 9]
         // ============================================================
 
-        Tensor AJ({2,3});
+        Tensor<double> AJ({2,3});
 
         AJ({0,0}) = 1;
         AJ({0,1}) = 2;
@@ -393,7 +393,7 @@ int main()
         AJ({1,1}) = 5;
         AJ({1,2}) = 6;
 
-        Tensor AK = AJ.sum(0);
+        Tensor<double> AK = AJ.sum(0);
 
         bool test13 =
             AK({0}) == 5 &&
@@ -412,7 +412,7 @@ int main()
         // -> [6, 15]
         // ============================================================
 
-        Tensor AL = AJ.sum(1);
+        Tensor<double> AL = AJ.sum(1);
 
         bool test14 =
             AL({0}) == 6 &&
@@ -426,7 +426,7 @@ int main()
         // [2,3,4]
         // ============================================================
 
-        Tensor AM({2,3,4});
+        Tensor<double> AM({2,3,4});
 
         size_t value = 0;
 
@@ -435,7 +435,7 @@ int main()
                 for (size_t k = 0; k < 4; ++k)
                     AM({i,j,k}) = static_cast<double>(value++);
 
-        Tensor AN = AM.sum(1);
+        Tensor<double> AN = AM.sum(1);
 
         bool test15 =
             AN({0,0}) == 12 &&
@@ -458,8 +458,8 @@ int main()
 
         try
         {
-            Tensor AO({2,3,4});
-            Tensor AP = AO.sum(3);
+            Tensor<double> AO({2,3,4});
+            Tensor<double> AP = AO.sum(3);
         }
         catch (const std::out_of_range&)
         {
@@ -477,8 +477,8 @@ int main()
 
         try
         {
-            Tensor AQ({2,0,4});
-            Tensor AR = AQ.sum(1);
+            Tensor<double> AQ({2,0,4});
+            Tensor<double> AR = AQ.sum(1);
         }
         catch (const std::invalid_argument&)
         {
@@ -498,7 +498,7 @@ int main()
         // -> [2.5 3.5 4.5]
         // ============================================================
 
-        Tensor AS({2,3});
+        Tensor<double> AS({2,3});
 
         AS({0,0}) = 1;
         AS({0,1}) = 2;
@@ -507,7 +507,7 @@ int main()
         AS({1,1}) = 5;
         AS({1,2}) = 6;
 
-        Tensor AT = AS.mean(0);
+        Tensor<double> AT = AS.mean(0);
 
         bool test18 =
             AT({0}) == 2.5 &&
@@ -526,7 +526,7 @@ int main()
         // -> [2, 5]
         // ============================================================
 
-        Tensor AU = AS.mean(1);
+        Tensor<double> AU = AS.mean(1);
 
         bool test19 =
             AU({0}) == 2.0 &&
@@ -540,7 +540,7 @@ int main()
         // -> shape [1, 3]
         // ============================================================
 
-        Tensor AV = AS.mean(0, true);
+        Tensor<double> AV = AS.mean(0, true);
 
         bool test20 =
             AV({0,0}) == 2.5 &&
@@ -558,8 +558,8 @@ int main()
 
         try
         {
-            Tensor AW({2,3,4});
-            Tensor AX = AW.mean(3);
+            Tensor<double> AW({2,3,4});
+            Tensor<double> AX = AW.mean(3);
         }
         catch (const std::out_of_range&)
         {
@@ -577,8 +577,8 @@ int main()
 
         try
         {
-            Tensor AY({2,0,4});
-            Tensor AZ = AY.mean(1);
+            Tensor<double> AY({2,0,4});
+            Tensor<double> AZ = AY.mean(1);
         }
         catch (const std::invalid_argument&)
         {
@@ -593,8 +593,8 @@ int main()
         // [2, 3] x [3, 2] -> [2, 2]
         // ============================================================
 
-        Tensor BA({2, 3});
-        Tensor BB({3, 2});
+        Tensor<double> BA({2, 3});
+        Tensor<double> BB({3, 2});
 
         BA({0,0}) = 1; BA({0,1}) = 2; BA({0,2}) = 3;
         BA({1,0}) = 4; BA({1,1}) = 5; BA({1,2}) = 6;
@@ -603,7 +603,7 @@ int main()
         BB({1,0}) = 9; BB({1,1}) = 10;
         BB({2,0}) = 11; BB({2,1}) = 12;
 
-        Tensor BC = BA.matmul(BB);
+        Tensor<double> BC = BA.matmul(BB);
 
         bool test23 =
             BC({0,0}) == 58 &&
@@ -619,8 +619,8 @@ int main()
         // [2, 2, 3] x [3, 2] -> [2, 2, 2]
         // ============================================================
 
-        Tensor BD({2, 2, 3});
-        Tensor BE({3, 2});
+        Tensor<double> BD({2, 2, 3});
+        Tensor<double> BE({3, 2});
 
         BE({0,0}) = 7; BE({0,1}) = 8;
         BE({1,0}) = 9; BE({1,1}) = 10;
@@ -632,7 +632,7 @@ int main()
         BD({1,0,0}) = 2; BD({1,0,1}) = 4; BD({1,0,2}) = 6;
         BD({1,1,0}) = 8; BD({1,1,1}) = 10; BD({1,1,2}) = 12;
 
-        Tensor BF = BD.matmul(BE);
+        Tensor<double> BF = BD.matmul(BE);
 
         bool test24 =
             BF({0,0,0}) == 58 &&
@@ -655,9 +655,9 @@ int main()
         bool test25 = false;
         try
         {
-            Tensor BG({2, 3});
-            Tensor BH({4, 2});
-            Tensor BI = BG.matmul(BH);
+            Tensor<double> BG({2, 3});
+            Tensor<double> BH({4, 2});
+            Tensor<double> BI = BG.matmul(BH);
         }
         catch (const std::invalid_argument&)
         {
@@ -675,9 +675,9 @@ int main()
         bool test26 = false;
         try
         {
-            Tensor BJ({3});
-            Tensor BK({3});
-            Tensor BL = BJ.matmul(BK);
+            Tensor<double> BJ({3});
+            Tensor<double> BK({3});
+            Tensor<double> BL = BJ.matmul(BK);
         }
         catch (const std::invalid_argument&)
         {
@@ -692,8 +692,8 @@ int main()
         // [2, 2, 3] x [2, 3, 2] -> [2, 2, 2]
         // ============================================================
         
-        Tensor BM({2, 2, 3});
-        Tensor BN({2, 3, 2});
+        Tensor<double> BM({2, 2, 3});
+        Tensor<double> BN({2, 3, 2});
 
         // Batch 0
         BM({0,0,0}) = 1; BM({0,0,1}) = 2; BM({0,0,2}) = 3;
@@ -711,7 +711,7 @@ int main()
         BN({1,1,0}) = 3; BN({1,1,1}) = 4;
         BN({1,2,0}) = 5; BN({1,2,1}) = 6;
 
-        Tensor BO = BM.matmul(BN);
+        Tensor<double> BO = BM.matmul(BN);
 
         bool test27 =
             // Batch 0
@@ -733,8 +733,8 @@ int main()
         // [2, 3] x [2, 3, 2] -> [2, 2, 2]
         // ============================================================
         
-        Tensor BP({2, 3});
-        Tensor BQ({2, 3, 2});
+        Tensor<double> BP({2, 3});
+        Tensor<double> BQ({2, 3, 2});
 
         BP({0,0}) = 1; BP({0,1}) = 0; BP({0,2}) = 0;
         BP({1,0}) = 0; BP({1,1}) = 1; BP({1,2}) = 0;
@@ -749,7 +749,7 @@ int main()
         BQ({1,1,0}) = 3; BQ({1,1,1}) = 4;
         BQ({1,2,0}) = 5; BQ({1,2,1}) = 6;
 
-        Tensor BR = BP.matmul(BQ);
+        Tensor<double> BR = BP.matmul(BQ);
 
         bool test28 =
             // Batch 0
@@ -774,9 +774,9 @@ int main()
         bool test29 = false;
         try
         {
-            Tensor BS({2, 2, 3});
-            Tensor BT({3, 3, 2});
-            Tensor BU = BS.matmul(BT);
+            Tensor<double> BS({2, 2, 3});
+            Tensor<double> BT({3, 3, 2});
+            Tensor<double> BU = BS.matmul(BT);
         }
         catch (const std::invalid_argument&)
         {
@@ -791,8 +791,8 @@ int main()
         // [2, 1, 2, 3] x [4, 3, 2] -> [2, 4, 2, 2]
         // ============================================================
         
-        Tensor BV({2, 1, 2, 3});
-        Tensor BW({4, 3, 2});
+        Tensor<double> BV({2, 1, 2, 3});
+        Tensor<double> BW({4, 3, 2});
 
         for (size_t b1 = 0; b1 < 2; ++b1)
             for (size_t b2 = 0; b2 < 1; ++b2)
@@ -805,7 +805,7 @@ int main()
                 for (size_t j = 0; j < 2; ++j)
                     BW({b1, i, j}) = 2.0;
 
-        Tensor BX = BV.matmul(BW);
+        Tensor<double> BX = BV.matmul(BW);
 
         bool test30 = true;
         try {
@@ -843,6 +843,23 @@ int main()
         }
 
         printTest("Complex Broadcast Matmul [2,1,2,3] x [4,3,2]", test30);
+
+        // ============================================================
+        // TEST 31: Tensor Fill
+        // ============================================================
+        
+        Tensor<double> BY({2, 3});
+        BY.fill(7.5);
+
+        bool test31 = true;
+        for (size_t i = 0; i < 2; ++i) {
+            for (size_t j = 0; j < 3; ++j) {
+                if (BY({i, j}) != 7.5) {
+                    test31 = false;
+                }
+            }
+        }
+        printTest("Tensor Fill", test31);
 
 
         std::cout << "\nAll tests completed.\n";
