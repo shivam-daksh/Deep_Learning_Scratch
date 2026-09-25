@@ -181,29 +181,75 @@ int main() {
     Perceptron p(2);
     p.setLearningRate(0.01);
     
-    int epochs = 10;
-    std::cout << "Training for " << epochs << " epochs...\n";
-
-    for (int epoch = 1; epoch <= epochs; ++epoch) {
-        double totalLoss = 0.0;
-        for (const auto& data : dataset) {
-            double predicted = p.forward(data.first);
-            double error = predicted - data.second;
-            totalLoss += error * error;
-            p.train(data.first, data.second);
-        }
+    int choice = 0;
+    while (true) {
+        std::cout << "\n--- Perceptron Menu ---\n";
+        std::cout << "1. Train Model\n";
+        std::cout << "2. Test Model\n";
+        std::cout << "3. Save Model Weights\n";
+        std::cout << "4. Load Model Weights\n";
+        std::cout << "5. Exit\n";
+        std::cout << "Enter your choice: ";
         
-        if (epoch % 10 == 0) {
-            std::cout << "Epoch " << epoch << " Loss: " << (totalLoss / dataset.size()) << "\n";
+        if (!(std::cin >> choice)) {
+            std::cin.clear(); // clear the error flag
+            std::string temp;
+            std::cin >> temp; // discard invalid input
+            std::cout << "Invalid input.\n";
+            continue;
         }
-    }
 
-    std::cout << "\nFinal Predictions vs Targets:\n";
-    for (const auto& data : dataset) {
-        double predicted = p.forward(data.first);
-        std::cout << "Input: (" << data.first({0}) << ", " << data.first({1}) 
-                  << ") | Predicted: " << predicted 
-                  << " | Target: " << data.second << "\n";
+        if (choice == 1) {
+            int epochs;
+            std::cout << "Enter number of epochs to train: ";
+            std::cin >> epochs;
+            
+            std::cout << "Training for " << epochs << " epochs...\n";
+            for (int epoch = 1; epoch <= epochs; ++epoch) {
+                double totalLoss = 0.0;
+                for (const auto& data : dataset) {
+                    double predicted = p.forward(data.first);
+                    double error = predicted - data.second;
+                    totalLoss += error * error;
+                    p.train(data.first, data.second);
+                }
+                
+                if (epoch % 10 == 0 || epoch == epochs) {
+                    std::cout << "Epoch " << epoch << " Loss: " << (totalLoss / dataset.size()) << "\n";
+                }
+            }
+        } else if (choice == 2) {
+            double totalLoss = 0.0;
+            std::cout << "\n--- Testing Model ---\n";
+            for (const auto& data : dataset) {
+                double predicted = p.forward(data.first);
+                double error = predicted - data.second;
+                totalLoss += error * error;
+            }
+            std::cout << "Average Loss on dataset: " << (totalLoss / dataset.size()) << "\n";
+            std::cout << "First 5 predictions:\n";
+            for(size_t i = 0; i < std::min((size_t)5, dataset.size()); i++){
+                double predicted = p.forward(dataset[i].first);
+                std::cout << "Input: (" << dataset[i].first({0}) << ", " << dataset[i].first({1}) 
+                          << ") | Predicted: " << predicted 
+                          << " | Target: " << dataset[i].second << "\n";
+            }
+        } else if (choice == 3) {
+            std::string filename;
+            std::cout << "Enter filename to save (e.g., model.txt): ";
+            std::cin >> filename;
+            p.save(filename);
+        } else if (choice == 4) {
+            std::string filename;
+            std::cout << "Enter filename to load (e.g., model.txt): ";
+            std::cin >> filename;
+            p.load(filename);
+        } else if (choice == 5) {
+            std::cout << "Exiting...\n";
+            break;
+        } else {
+            std::cout << "Invalid choice. Please try again.\n";
+        }
     }
 
     return 0;
