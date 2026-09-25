@@ -103,6 +103,23 @@ const DType& Tensor<DType>::operator()(const std::vector<size_t>&indices) const 
         }
 
 template <typename DType>
+const DType& Tensor<DType>::getIndexMem(const size_t index){
+            if(index >= this->size){
+                throw std::out_of_range("Tensor index out of bounds");
+            }
+            return this->storage[index];
+}
+
+template <typename DType>
+void Tensor<DType>::setIndexMem(const size_t index, const DType& value){
+            if(index >= this->size){
+                throw std::out_of_range("Tensor index out of bounds");
+            }
+            this->storage[index] = value;
+}
+
+
+template <typename DType>
 bool Tensor<DType>::areShapesEqual(const std::vector<size_t>&a, const std::vector<size_t>&b) const {
             if(a.size() != b.size()) return false;
             for(int i = 0; i < a.size(); i++) if(a[i] != b[i]) return false;

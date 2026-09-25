@@ -53,7 +53,91 @@ class Perceptron{
             this->bias -= (this->learningRate * dL_db);            
 
         }
-};
+
+        void load(const std::string& filename){
+            std::ifstream model(filename);
+
+            if(!model){
+                std::cerr << "Error : could not save to model weights" << std::endl;
+                return;
+            }
+
+            std::string line;
+
+            int lineCount = 1;
+            std::vector<size_t> shape;
+            // Tensor<double> weights;
+            // double bias;
+
+            while(std::getline(model, line)){
+                
+                std::stringstream ss(line);
+
+                if(lineCount == 1){
+                    size_t number;
+                    while(ss >> number){
+                        shape.push_back(number);
+                    }
+                    this->weights.resize(shape);
+                } else if(lineCount == 2){
+                    // weights
+                    double number;
+                    size_t i = 0;
+                    while(ss >> number){
+                        this->weights.setIndexMem(i++, number);
+                    }
+                } else {
+                    // bias
+                    ss >> this->bias;
+                }
+                lineCount++;
+            }
+
+            model.close();
+            std::cout << "Model weights has been loaded" << std::endl;
+
+        }
+
+        void save(const std::string& filename){
+            std::ofstream model(filename);
+
+            if(!model){
+                std::cerr << "Error : could not save to model weights" << std::endl;
+                return;
+            }
+
+            // format of the model file
+            /*
+            metadata - shape
+            serialized weights (tensor)
+            bias
+            */
+
+            for(size_t i = 0; i < this->weights.getShape().size(); i++){
+                model << weights.getShape()[i] << " ";
+            }
+
+            model << "\n";
+
+            // now serialized contiguous weights
+
+            for(size_t i = 0; i < this->weights.getSize(); i++){
+                model << this->weights.getIndexMem(i) << " ";
+            }
+            model << "\n";
+
+            // bias values
+
+            model << this->bias << "\n";
+
+
+            model.close();
+
+            std::cout << "Model saved successfully" << std::endl;
+        }
+
+
+    };
 
 int main() {
     std::ifstream file("dataset.csv");
@@ -97,7 +181,7 @@ int main() {
     Perceptron p(2);
     p.setLearningRate(0.01);
     
-    int epochs = 100;
+    int epochs = 10;
     std::cout << "Training for " << epochs << " epochs...\n";
 
     for (int epoch = 1; epoch <= epochs; ++epoch) {

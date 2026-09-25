@@ -45,7 +45,10 @@ class Tensor {
         inline const std::vector<size_t>& getStride()const{
             return this->stride;
         }
-        
+        // access the actual serial storage tensor
+        const DType& getIndexMem(const size_t index);
+        void setIndexMem(const size_t index, const DType& value);
+
         // tensor arithmetic/math
         Tensor operator+(const Tensor& other) const;
         Tensor operator-(const Tensor& other) const;
