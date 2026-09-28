@@ -58,7 +58,7 @@ class Perceptron{
             std::ifstream model(filename);
 
             if(!model){
-                std::cerr << "Error : could not save to model weights" << std::endl;
+                std::cerr << "Error : could not load the model weights" << std::endl;
                 return;
             }
 
@@ -140,46 +140,52 @@ class Perceptron{
     };
 
 int main() {
-    std::ifstream file("dataset.csv");
+    std::string filename = "dataset4d.csv";
+    std::ifstream file(filename);
     if (!file.is_open()) {
-        file.open("../dataset.csv"); // Try looking in the parent directory if run from build/
+        file.open("../" + filename);
     }
     
     if (!file.is_open()) {
-        std::cerr << "Failed to open dataset.csv. Please ensure it exists in your current directory.\n";
+        std::cerr << "Failed to open " << filename << ". Please ensure it exists in your current directory.\n";
         return 1;
     }
 
     std::vector<std::pair<Tensor<double>, double>> dataset;
     std::string line;
     
-    // Skip header
+    // Skip header and count columns
     std::getline(file, line);
+    size_t numColumns = 1;
+    for (char c : line) {
+        if (c == ',') numColumns++;
+    }
+    size_t inputFeatures = numColumns - 1;
 
     while (std::getline(file, line)) {
         if (line.empty()) continue;
         std::stringstream ss(line);
         std::string val;
         
-        std::getline(ss, val, ',');
-        double x1 = std::stod(val);
+        std::vector<double> row_vals;
+        while (std::getline(ss, val, ',')) {
+            row_vals.push_back(std::stod(val));
+        }
         
-        std::getline(ss, val, ',');
-        double x2 = std::stod(val);
+        if (row_vals.size() != numColumns) continue;
         
-        std::getline(ss, val, ',');
-        double y = std::stod(val);
-
-        Tensor<double> input({2});
-        input({0}) = x1;
-        input({1}) = x2;
+        Tensor<double> input({inputFeatures});
+        for (size_t i = 0; i < inputFeatures; i++) {
+            input({i}) = row_vals[i];
+        }
         
+        double y = row_vals.back();
         dataset.push_back({input, y});
     }
 
-    // Create a perceptron with 2 input features
-    Perceptron p(2);
-    p.setLearningRate(0.01);
+    // Create a perceptron with dynamic input features
+    Perceptron p(inputFeatures);
+    p.setLearningRate(0.0001);
     
     int choice = 0;
     while (true) {
@@ -230,8 +236,12 @@ int main() {
             std::cout << "First 5 predictions:\n";
             for(size_t i = 0; i < std::min((size_t)5, dataset.size()); i++){
                 double predicted = p.forward(dataset[i].first);
-                std::cout << "Input: (" << dataset[i].first({0}) << ", " << dataset[i].first({1}) 
-                          << ") | Predicted: " << predicted 
+                std::cout << "Input: (";
+                for (size_t j = 0; j < inputFeatures; j++) {
+                    std::cout << dataset[i].first({j});
+                    if (j < inputFeatures - 1) std::cout << ", ";
+                }
+                std::cout << ") | Predicted: " << predicted 
                           << " | Target: " << dataset[i].second << "\n";
             }
         } else if (choice == 3) {
