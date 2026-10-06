@@ -1,4 +1,6 @@
 #include <iostream>
+#include <chrono>
+#include <iomanip>
 #include <vector>
 #include <fstream>
 #include <sstream>
@@ -7,18 +9,30 @@
 #include "Tensor.hh"
 
 
+enum class Activation { SIGMOID, RELU, LINEAR };
+
 class Layer {
     private:
         Tensor<double> weights;
         Tensor<double> bias;
+        Activation activationType = Activation::LINEAR;
         double learningRate = 0.01;
-        size_t epochs = 10;
+        size_t epochs = 50;
         
         // Cache the output for the backward pass
         Tensor<double> last_output;
 
     public:
-        Layer(size_t no_of_neurons, size_t inputSize) : weights({no_of_neurons, inputSize}), bias({no_of_neurons}){}
+        Layer(size_t no_of_neurons, size_t inputSize) : weights({no_of_neurons, inputSize}), bias({no_of_neurons}) {
+            // Random weight initialization (CRITICAL to break symmetry in Deep Networks!)
+            for(size_t i = 0; i < weights.getSize(); i++) {
+                double r = ((double)rand() / RAND_MAX) * 2.0 - 1.0; // Random between -1 and 1
+                weights.setIndexMem(i, r);
+            }
+            for(size_t i = 0; i < bias.getSize(); i++) {
+                bias.setIndexMem(i, 0.0);
+            }
+        }
         
         void setEpochs(size_t epochs){
             this->epochs = epochs;
@@ -27,15 +41,24 @@ class Layer {
         void setLearningRate(double lr){
             this->learningRate = lr;
         }
+        
+        void setActivation(Activation type) {
+            this->activationType = type;
+        }
 
         Tensor<double> forward(const Tensor<double>&input){
             Tensor<double> res = this->weights.matmul(input);
             res = res + this->bias;
             
-            // Apply Sigmoid activation function
+            // Apply Activation Function
             for(size_t i = 0; i < res.getSize(); i++){
                 double val = res.getIndexMem(i);
-                res.setIndexMem(i, 1.0 / (1.0 + std::exp(-val)));
+                if (activationType == Activation::SIGMOID) {
+                    res.setIndexMem(i, 1.0 / (1.0 + std::exp(-val)));
+                } else if (activationType == Activation::RELU) {
+                    res.setIndexMem(i, val > 0 ? val : 0.0);
+                }
+                // If LINEAR, do nothing (f(x) = x)
             }
             
             this->last_output = res;
@@ -59,8 +82,14 @@ class Layer {
                 // Loss Derivative now comes from the parameter (passed from the layer ahead!)
                 double current_dL_dout = dL_dout.getIndexMem(n);
                 
-                // Activation (Sigmoid: dout/dZ = output * (1 - output))
-                double dout_dZ = output * (1.0 - output);
+                // Calculate Derivative based on Activation Type
+                double dout_dZ = 1.0; // Default for LINEAR (f'(x) = 1)
+                
+                if (activationType == Activation::SIGMOID) {
+                    dout_dZ = output * (1.0 - output);
+                } else if (activationType == Activation::RELU) {
+                    dout_dZ = output > 0 ? 1.0 : 0.0;
+                }
                 
                 // Delta (dL/dZ)
                 double delta = current_dL_dout * dout_dZ;
@@ -177,7 +206,7 @@ class Layer {
 };
 
 int main(){
-    std::string filename = "dataset4d.csv";
+    std::string filename = "big_dataset.csv";
     std::ifstream file(filename);
 
     if(!file.is_open()){
@@ -224,13 +253,22 @@ int main(){
 
     }
 
-    // Create a neuron layer (1 output neuron, inputFeatures inputs)
-    Layer layer1(1, inputFeatures);
-    layer1.setLearningRate(0.01);
+    // --- DEEP LEARNING ---
+    // Hidden Layer (w/ ReLU to learn non-linear patterns)
+    Layer hidden_layer(8, inputFeatures);
+    hidden_layer.setLearningRate(0.01); 
+    hidden_layer.setActivation(Activation::RELU);
     
-    size_t epochs = 100; // You can adjust this!
+    // Output Layer (w/ Sigmoid to output 0 or 1)
+    Layer output_layer(1, 8);
+    output_layer.setLearningRate(0.01);
+    output_layer.setActivation(Activation::SIGMOID);
+    
+    size_t epochs = 40; // You can adjust this!
     
     std::cout << "Starting training on " << dataset.size() << " samples with " << inputFeatures << " features each...\n";
+    
+    auto start_time = std::chrono::high_resolution_clock::now();
     
     for (size_t epoch = 0; epoch < epochs; ++epoch) {
         double total_loss = 0.0;
@@ -239,20 +277,22 @@ int main(){
             const Tensor<double>& x = data_point.first;
             double target_y = data_point.second;
             
-            // 1. Forward pass
-            Tensor<double> prediction_tensor = layer1.forward(x);
-            double prediction = prediction_tensor.getIndexMem(0); // single neuron output
+            // 1. Forward Pass (Relay Race)
+            Tensor<double> hidden_out = hidden_layer.forward(x);
+            Tensor<double> prediction_tensor = output_layer.forward(hidden_out);
+            double prediction = prediction_tensor.getIndexMem(0);
             
-            // 2. Calculate error and loss (Mean Squared Error)
+            // 2. Calculate Error (MSE)
             double error = prediction - target_y;
             total_loss += 0.5 * error * error;
             
-            // 3. Setup initial gradient for the backward pass (dL_dout)
+            // 3. Initial Gradient for Output Layer
             Tensor<double> dL_dout({1});
             dL_dout.setIndexMem(0, error);
             
-            // 4. Backward pass
-            layer1.backward(x, dL_dout);
+            // 4. Backward Pass (Relay Race)
+            Tensor<double> hidden_error = output_layer.backward(hidden_out, dL_dout);
+            hidden_layer.backward(x, hidden_error);
         }
         
         // Print average loss every 10 epochs to watch it learn
@@ -262,6 +302,44 @@ int main(){
         }
     }
     
-    std::cout << "Training complete!\n";
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> training_time = end_time - start_time;
+    
+    std::cout << "Training complete in " << training_time.count() << " seconds!\n\n";
+    
+    // --- TESTING PHASE ---
+    std::cout << "================ TESTING PHASE ================\n";
+    double test_loss = 0.0;
+    
+    std::cout << std::left << std::setw(15) << "Prediction" 
+              << std::left << std::setw(15) << "Target" 
+              << "Error\n";
+    std::cout << "-----------------------------------------------\n";
+    
+    for (size_t i = 0; i < dataset.size(); ++i) {
+        const Tensor<double>& x = dataset[i].first;
+        double target_y = dataset[i].second;
+        
+        // Forward pass
+        Tensor<double> hidden_out = hidden_layer.forward(x);
+        Tensor<double> prediction_tensor = output_layer.forward(hidden_out);
+        double prediction = prediction_tensor.getIndexMem(0);
+        
+        // Calculate MSE
+        double error = prediction - target_y;
+        test_loss += 0.5 * error * error;
+        
+        // Print first 10 samples
+        if (i < 10) {
+            std::cout << std::left << std::setw(15) << prediction 
+                      << std::left << std::setw(15) << target_y 
+                      << error << "\n";
+        }
+    }
+    
+    double avg_test_loss = test_loss / dataset.size();
+    std::cout << "\nFinal Test MSE: " << avg_test_loss << "\n";
+    std::cout << "===============================================\n";
+    
     return 0;
 }
