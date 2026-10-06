@@ -258,9 +258,13 @@ int main(){
     Layer hidden_layer(8, inputFeatures);
     hidden_layer.setLearningRate(0.01); 
     hidden_layer.setActivation(Activation::RELU);
+
+    Layer hidden_layer2(5, 8);
+    hidden_layer2.setLearningRate(0.01); 
+    hidden_layer2.setActivation(Activation::RELU);
     
     // Output Layer (w/ Sigmoid to output 0 or 1)
-    Layer output_layer(1, 8);
+    Layer output_layer(1, 5);
     output_layer.setLearningRate(0.01);
     output_layer.setActivation(Activation::SIGMOID);
     
@@ -279,7 +283,8 @@ int main(){
             
             // 1. Forward Pass (Relay Race)
             Tensor<double> hidden_out = hidden_layer.forward(x);
-            Tensor<double> prediction_tensor = output_layer.forward(hidden_out);
+            Tensor<double> hidden_out2 = hidden_layer2.forward(hidden_out);
+            Tensor<double> prediction_tensor = output_layer.forward(hidden_out2);
             double prediction = prediction_tensor.getIndexMem(0);
             
             // 2. Calculate Error (MSE)
@@ -291,7 +296,9 @@ int main(){
             dL_dout.setIndexMem(0, error);
             
             // 4. Backward Pass (Relay Race)
-            Tensor<double> hidden_error = output_layer.backward(hidden_out, dL_dout);
+
+            Tensor<double> hidden_error2 = output_layer.backward(hidden_out2, dL_dout);
+            Tensor<double> hidden_error = hidden_layer2.backward(hidden_out, hidden_error2);
             hidden_layer.backward(x, hidden_error);
         }
         
@@ -322,7 +329,8 @@ int main(){
         
         // Forward pass
         Tensor<double> hidden_out = hidden_layer.forward(x);
-        Tensor<double> prediction_tensor = output_layer.forward(hidden_out);
+        Tensor<double> hidden_out2 = hidden_layer2.forward(hidden_out);
+        Tensor<double> prediction_tensor = output_layer.forward(hidden_out2);
         double prediction = prediction_tensor.getIndexMem(0);
         
         // Calculate MSE
