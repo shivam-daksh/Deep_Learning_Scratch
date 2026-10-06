@@ -46,7 +46,7 @@ class Tensor {
             return this->stride;
         }
         // access the actual serial storage tensor
-        const DType& getIndexMem(const size_t index);
+        const DType& getIndexMem(const size_t index) const;
         void setIndexMem(const size_t index, const DType& value);
 
         // tensor arithmetic/math

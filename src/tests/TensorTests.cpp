@@ -668,11 +668,11 @@ int main()
 
 
         // ============================================================
-        // TEST 26: Matmul requires at least 2 dimensions
+        // TEST 26: Matmul with 1D tensors (Vector Promotion)
         // [3] x [3]
         // ============================================================
 
-        bool test26 = false;
+        bool test26 = true;
         try
         {
             Tensor<double> BJ({3});
@@ -681,10 +681,10 @@ int main()
         }
         catch (const std::invalid_argument&)
         {
-            test26 = true;
+            test26 = false; // It should no longer throw!
         }
 
-        printTest("Reject matmul with < 2 dimensions", test26);
+        printTest("Accept matmul with 1D vectors", test26);
 
 
         // ============================================================
@@ -861,6 +861,30 @@ int main()
         }
         printTest("Tensor Fill", test31);
 
+        // ============================================================
+        // TEST 32: 1D Matmul cases
+        // ============================================================
+        bool test32 = true;
+        try {
+            Tensor<double> V1({3}); V1({0}) = 1; V1({1}) = 2; V1({2}) = 3;
+            Tensor<double> V2({3}); V2({0}) = 4; V2({1}) = 5; V2({2}) = 6;
+            
+            // 1D x 1D (dot product: 1*4 + 2*5 + 3*6 = 32)
+            Tensor<double> r1 = V1.matmul(V2);
+            if (r1.getShape().size() != 0 || r1({}) != 32.0) test32 = false;
+
+            // 2D x 1D ([2, 3] x [3])
+            Tensor<double> M2({2, 3});
+            M2({0,0}) = 1; M2({0,1}) = 2; M2({0,2}) = 3;
+            M2({1,0}) = 4; M2({1,1}) = 5; M2({1,2}) = 6;
+            Tensor<double> r2 = M2.matmul(V1);
+            if (r2.getShape().size() != 1 || r2.getShape()[0] != 2) test32 = false;
+            if (r2({0}) != 14.0 || r2({1}) != 32.0) test32 = false;
+            
+        } catch (...) {
+            test32 = false;
+        }
+        printTest("1D Matmul (Vector Promotion)", test32);
 
         std::cout << "\nAll tests completed.\n";
     }

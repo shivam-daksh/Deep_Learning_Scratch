@@ -103,7 +103,7 @@ const DType& Tensor<DType>::operator()(const std::vector<size_t>&indices) const 
         }
 
 template <typename DType>
-const DType& Tensor<DType>::getIndexMem(const size_t index){
+const DType& Tensor<DType>::getIndexMem(const size_t index) const{
             if(index >= this->size){
                 throw std::out_of_range("Tensor index out of bounds");
             }
@@ -497,8 +497,49 @@ Tensor<DType> Tensor<DType>::mean(const size_t axis, const bool keepdim) const {
 
 template <typename DType>
 Tensor<DType> Tensor<DType>::matmul(const Tensor<DType>& other) const {
+    // ---------------------------------------------------------
+    // 1. DIMENSION PROMOTION (Handle 1D vectors)
+    // ---------------------------------------------------------
+    bool this_is_1d = (this->shape.size() == 1);
+    bool other_is_1d = (other.shape.size() == 1);
 
-            // Both tensors must have at least 2 dimensions
+    if (this_is_1d || other_is_1d) {
+        Tensor<DType> A = *this;
+        Tensor<DType> B = other;
+
+        // Promote A: [K] -> [1, K]
+        if (this_is_1d) {
+            A.shape.insert(A.shape.begin(), 1);
+            A.stride.insert(A.stride.begin(), A.stride.empty() ? 1 : A.stride[0]);
+        }
+        // Promote B: [K] -> [K, 1]
+        if (other_is_1d) {
+            B.shape.push_back(1);
+            B.stride.push_back(1);
+        }
+
+        // Recursively call matmul with the new 2D promoted tensors
+        Tensor<DType> result = A.matmul(B);
+
+        // Demote the result shape based on what we promoted
+        if (this_is_1d && other_is_1d) {
+            // [1, 1] -> [] (Scalar)
+            result.shape.clear();
+            result.stride.clear();
+        } else if (this_is_1d) {
+            // [..., 1, N] -> [..., N]
+            result.shape.erase(result.shape.end() - 2);
+            result.stride.erase(result.stride.end() - 2);
+        } else if (other_is_1d) {
+            // [..., M, 1] -> [..., M]
+            result.shape.pop_back();
+            result.stride.pop_back();
+        }
+
+        return result;
+    }
+
+    // Both tensors must have at least 2 dimensions
             if(this->shape.size() < 2 || other.shape.size() < 2) {
                 throw std::invalid_argument(
                     "matmul requires both tensors to have at least 2 dimensions"
