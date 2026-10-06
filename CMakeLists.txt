@@ -26,6 +26,8 @@ target_include_directories(perceptron PRIVATE
     src/Tensor
 )
 add_executable(layer_test
+    src/models/perceptron/main.cpp
+    src/models/perceptron/Model.cpp
     src/models/perceptron/Layer.cpp
     src/Tensor/Tensor.cpp
 )
