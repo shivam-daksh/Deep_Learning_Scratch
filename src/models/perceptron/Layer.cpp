@@ -2,7 +2,7 @@
 #include <cmath>
 #include <iostream>
 
-Layer::Layer(size_t no_of_neurons, size_t inputSize) : weights({no_of_neurons, inputSize}), bias({no_of_neurons}), last_input({0}), last_output({0}) {
+Layer::Layer(size_t no_of_neurons, size_t inputSize) : weights({no_of_neurons, inputSize}), bias({no_of_neurons}), dW({no_of_neurons, inputSize}), dB({no_of_neurons}), last_input({0}), last_output({0}) {
     // Random weight initialization (CRITICAL to break symmetry in Deep Networks!)
     for(size_t i = 0; i < weights.getSize(); i++) {
         double r = ((double)rand() / RAND_MAX) * 2.0 - 1.0; // Random between -1 and 1
@@ -11,6 +11,22 @@ Layer::Layer(size_t no_of_neurons, size_t inputSize) : weights({no_of_neurons, i
     for(size_t i = 0; i < bias.getSize(); i++) {
         bias.setIndexMem(i, 0.0);
     }
+}
+
+Tensor<double>& Layer::getWeights(){
+    this->weights;
+}
+
+Tensor<double>& Layer::getBias(){
+    this->bias;
+}
+
+Tensor<double>& Layer::getdW(){
+    this->dW;
+}
+
+Tensor<double>& Layer::getdB(){
+    this->dB;
 }
 
 void Layer::setLearningRate(double lr) {
@@ -75,12 +91,14 @@ Tensor<double> Layer::backward(const Tensor<double>& dL_dout) {
             
             // Update weight
             double input_val = this->last_input.getIndexMem(i);
-            this->weights.setIndexMem(w_index, current_w - (this->learningRate * delta * input_val));
+            // this->weights.setIndexMem(w_index, current_w - (this->learningRate * delta * input_val));
+            this->dW.setIndexMem(w_index, delta * input_val);
         }
         
         // Update Bias
         double current_b = this->bias.getIndexMem(n);
-        this->bias.setIndexMem(n, current_b - (this->learningRate * delta));
+        // this->bias.setIndexMem(n, current_b - (this->learningRate * delta));
+        this->dB.setIndexMem(n, delta);
     }
     
     return dL_dInput;

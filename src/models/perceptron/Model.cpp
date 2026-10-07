@@ -7,6 +7,10 @@ void Model::add(const Layer& layer) {
     layers.push_back(layer);
 }
 
+std::vector<Layer>& Model::getLayers(){
+    return this->layers;
+}
+
 Tensor<double> Model::forward(Tensor<double> x) {
     Tensor<double> current = x;
     for (Layer& layer : layers) {
