@@ -4,6 +4,7 @@
 #include <vector>
 #include "Model.hh"
 #include "Tensor.hh"
+#include "SGD.hh"
 
 int main() {
     std::string filename = "big_dataset.csv";
@@ -63,7 +64,8 @@ int main() {
     model.add(output_layer);
     
     // Train and Evaluate
-    model.fit(dataset, 40);
+    SGD optimizer(0.01);
+    model.fit(dataset, 40, &optimizer);
     model.evaluate(dataset);
 
     return 0;

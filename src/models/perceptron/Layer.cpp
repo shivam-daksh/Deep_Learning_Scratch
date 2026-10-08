@@ -14,19 +14,19 @@ Layer::Layer(size_t no_of_neurons, size_t inputSize) : weights({no_of_neurons, i
 }
 
 Tensor<double>& Layer::getWeights(){
-    this->weights;
+    return this->weights;
 }
 
 Tensor<double>& Layer::getBias(){
-    this->bias;
+    return this->bias;
 }
 
 Tensor<double>& Layer::getdW(){
-    this->dW;
+    return this->dW;
 }
 
 Tensor<double>& Layer::getdB(){
-    this->dB;
+    return this->dB;
 }
 
 void Layer::setLearningRate(double lr) {

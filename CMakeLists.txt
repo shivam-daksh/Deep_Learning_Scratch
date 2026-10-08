@@ -29,6 +29,7 @@ add_executable(layer_test
     src/models/perceptron/main.cpp
     src/models/perceptron/Model.cpp
     src/models/perceptron/Layer.cpp
+    src/models/perceptron/SDG.cpp
     src/Tensor/Tensor.cpp
 )
 

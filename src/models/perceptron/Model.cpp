@@ -1,4 +1,5 @@
 #include "Model.hh"
+#include "Optimizer.hh"
 #include <iostream>
 #include <chrono>
 #include <iomanip>
@@ -19,7 +20,7 @@ Tensor<double> Model::forward(Tensor<double> x) {
     return current;
 }
 
-void Model::fit(const std::vector<std::pair<Tensor<double>, double>>& dataset, size_t epochs) {
+void Model::fit(const std::vector<std::pair<Tensor<double>, double>>& dataset, size_t epochs, Optimizer* optimizer) {
     std::cout << "Starting training on " << dataset.size() << " samples...\n";
     auto start_time = std::chrono::high_resolution_clock::now();
     
@@ -45,6 +46,11 @@ void Model::fit(const std::vector<std::pair<Tensor<double>, double>>& dataset, s
             // Backward pass through the network (in reverse)
             for (int i = layers.size() - 1; i >= 0; --i) {
                 gradient = layers[i].backward(gradient);
+            }
+            
+            // Optimizer step (if provided)
+            if (optimizer) {
+                optimizer->step(*this);
             }
         }
         

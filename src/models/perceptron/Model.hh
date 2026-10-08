@@ -2,6 +2,8 @@
 #include "Layer.hh"
 #include <vector>
 
+class Optimizer;
+
 class Model {
     private:
         std::vector<Layer> layers;
@@ -11,6 +13,6 @@ class Model {
         void add(const Layer& layer);
         std::vector<Layer>& getLayers();
         Tensor<double> forward(Tensor<double> x);
-        void fit(const std::vector<std::pair<Tensor<double>, double>>& dataset, size_t epochs);
+        void fit(const std::vector<std::pair<Tensor<double>, double>>& dataset, size_t epochs, Optimizer* optimizer);
         void evaluate(const std::vector<std::pair<Tensor<double>, double>>& dataset);
 };
