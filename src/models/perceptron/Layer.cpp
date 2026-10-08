@@ -29,9 +29,9 @@ Tensor<double>& Layer::getdB(){
     return this->dB;
 }
 
-void Layer::setLearningRate(double lr) {
-    this->learningRate = lr;
-}
+// void Layer::setLearningRate(double lr) {
+//     this->learningRate = lr;
+// }
 
 void Layer::setActivation(Activation type) {
     this->activationType = type;

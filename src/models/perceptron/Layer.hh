@@ -6,7 +6,7 @@ enum class Activation { SIGMOID, RELU, LINEAR };
 
 class Layer {
     private:
-        double learningRate = 0.01;
+        // double learningRate = 0.01;
         // parameters
         Tensor<double> weights;
         Tensor<double> bias;
@@ -24,7 +24,7 @@ class Layer {
     public:
         Layer(size_t no_of_neurons, size_t inputSize);
         
-        void setLearningRate(double lr);
+        // void setLearningRate(double lr);
         void setActivation(Activation type);
         
         Tensor<double> forward(const Tensor<double>& input);

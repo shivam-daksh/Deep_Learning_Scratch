@@ -53,19 +53,17 @@ int main() {
     
     // Hidden Layer
     Layer hidden_layer(8, inputFeatures);
-    hidden_layer.setLearningRate(0.01);
     hidden_layer.setActivation(Activation::RELU);
     model.add(hidden_layer);
     
     // Output Layer
     Layer output_layer(1, 8);
-    output_layer.setLearningRate(0.01);
     output_layer.setActivation(Activation::SIGMOID);
     model.add(output_layer);
     
     // Train and Evaluate
     SGD optimizer(0.01);
-    model.fit(dataset, 40, &optimizer);
+    model.fit(dataset, 100, &optimizer);
     model.evaluate(dataset);
 
     return 0;
