@@ -3,10 +3,11 @@
 class SGD : public Optimizer {
     private:
         double learningRate;
+        Model &model;
     
     public:
-        explicit SGD(double lr);
-        void step(Model &model) override;
+        explicit SGD(Model &model, double lr);
+        void step() override;
 
         ~SGD() override = default;
 };

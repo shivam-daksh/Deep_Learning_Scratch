@@ -1,11 +1,9 @@
 #include "SGD.hh"
 
-SGD::SGD(double lr) : learningRate(lr){
+SGD::SGD(Model &model, double lr) : model(model), learningRate(lr){}
 
-}
-
-void SGD::step(Model &model){
-    std::vector<Layer>& layers = model.getLayers();
+void SGD::step(){
+    std::vector<Layer>& layers = this->model.getLayers();
 
     for(Layer &layer : layers){
         Tensor<double> &weights = layer.getWeights();

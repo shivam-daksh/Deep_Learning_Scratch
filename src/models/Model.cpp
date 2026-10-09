@@ -1,8 +1,8 @@
-#include "Model.hh"
-#include "Optimizer.hh"
 #include <iostream>
 #include <chrono>
 #include <iomanip>
+#include "Model.hh"
+#include "Optimizer.hh"
 
 void Model::add(const Layer& layer) {
     layers.push_back(layer);
@@ -50,7 +50,7 @@ void Model::fit(const std::vector<std::pair<Tensor<double>, double>>& dataset, s
             
             // Optimizer step (if provided)
             if (optimizer) {
-                optimizer->step(*this);
+                optimizer->step();
             }
         }
         

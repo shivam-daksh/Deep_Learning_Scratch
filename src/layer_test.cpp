@@ -5,6 +5,7 @@
 #include "Model.hh"
 #include "Tensor.hh"
 #include "SGD.hh"
+#include "Momentum.hh"
 
 int main() {
     std::string filename = "big_dataset.csv";
@@ -62,7 +63,7 @@ int main() {
     model.add(output_layer);
     
     // Train and Evaluate
-    SGD optimizer(0.01);
+    Momentum optimizer(model, 0.2, 0.01);
     model.fit(dataset, 100, &optimizer);
     model.evaluate(dataset);
 
