@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(TensorEngine LANGUAGES CXX)
+project(NeuralNetwork LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -26,15 +26,19 @@ target_include_directories(perceptron PRIVATE
     src/Tensor
 )
 add_executable(layer_test
-    src/models/perceptron/main.cpp
-    src/models/perceptron/Model.cpp
-    src/models/perceptron/Layer.cpp
-    src/models/perceptron/SDG.cpp
+    src/layer_test.cpp
+    src/models/Model.cpp
+    src/Layer/Layer.cpp
+    src/Optimizers/SDG.cpp
     src/Tensor/Tensor.cpp
 )
 
 target_include_directories(layer_test PRIVATE
     src
+    src/Tensor
+    src/models
+    src/Layer
+    src/Optimizers
     src/Tensor
 )
 
