@@ -6,6 +6,7 @@
 #include "Tensor.hh"
 #include "SGD.hh"
 #include "Momentum.hh"
+#include "Adam.hh"
 
 int main() {
     std::string filename = "big_dataset.csv";
@@ -63,7 +64,7 @@ int main() {
     model.add(output_layer);
     
     // Train and Evaluate
-    Momentum optimizer(model, 0.2, 0.01);
+    Adam optimizer(model, 0.3, 0.3, 0.01);
     model.fit(dataset, 100, &optimizer);
     model.evaluate(dataset);
 

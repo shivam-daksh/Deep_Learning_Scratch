@@ -52,6 +52,7 @@ void Momentum::step(){
             
             double db = dB.getIndexMem(n);
             double newVelB = this->beta * b_vel_layer.getIndexMem(n) + db;
+            b_vel_layer.setIndexMem(n, newVelB);
             double old_bias = bias.getIndexMem(n);
             bias.setIndexMem(n, old_bias - this->learningRate * newVelB);
         }

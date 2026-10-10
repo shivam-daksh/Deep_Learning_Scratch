@@ -31,6 +31,7 @@ add_executable(layer_test
     src/Layer/Layer.cpp
     src/Optimizers/SDG.cpp
     src/Optimizers/Momentum.cpp
+    src/Optimizers/Adam.cpp
     src/Tensor/Tensor.cpp
 )
 

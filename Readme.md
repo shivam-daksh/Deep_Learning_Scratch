@@ -66,3 +66,74 @@ Prediction     Target         Error
 Final Test MSE: 0.000171441
 ===============================================
 ```
+
+# Momentum with 0.01 lr, 0.8 beta and 100 epochs
+👻 shivam@MacBook-Pro ~/build 🌿(main) ❯ ./layer_test 
+Starting training on 10000 samples...
+Epoch 0 | Average Loss: 0.0295013
+Epoch 10 | Average Loss: 0.000471152
+Epoch 20 | Average Loss: 0.000213514
+Epoch 30 | Average Loss: 0.000134071
+Epoch 40 | Average Loss: 9.63626e-05
+Epoch 50 | Average Loss: 7.46404e-05
+Epoch 60 | Average Loss: 6.06162e-05
+Epoch 70 | Average Loss: 5.0855e-05
+Epoch 80 | Average Loss: 4.36929e-05
+Epoch 90 | Average Loss: 3.82275e-05
+Epoch 99 | Average Loss: 3.4315e-05
+Training complete in 107.592 seconds!
+
+================ TESTING PHASE ================
+Prediction     Target         Error
+-----------------------------------------------
+0.000124768    0              0.000124768
+0.999995       1              -5.45203e-06
+1.35778e-05    0              1.35778e-05
+0.999699       1              -0.000300607
+5.13817e-06    0              5.13817e-06
+0.997346       1              -0.00265373
+3.78765e-05    0              3.78765e-05
+0.999579       1              -0.000420564
+0.000421267    0              0.000421267
+1              1              -1.49544e-08
+
+Final Test MSE: 3.38386e-05
+===============================================
+👻 shivam@MacBook-Pro ~/build 🌿(main) ❯ 
+
+
+# ADAM with lr : 0.01, beta1 : 0.3, beta2 : 0.3, epochs : 100
+```
+👻 shivam@MacBook-Pro ~/build 🌿(main) ❯ ./layer_test
+Starting training on 10000 samples...
+Epoch 0 | Average Loss: 0.0106844
+Epoch 10 | Average Loss: 1.68038e-08
+Epoch 20 | Average Loss: 1.71585e-10
+Epoch 30 | Average Loss: 9.08615e-12
+Epoch 40 | Average Loss: 3.12102e-12
+Epoch 50 | Average Loss: 1.68744e-12
+Epoch 60 | Average Loss: 1.1249e-12
+Epoch 70 | Average Loss: 8.3923e-13
+Epoch 80 | Average Loss: 6.67701e-13
+Epoch 90 | Average Loss: 5.53153e-13
+Epoch 99 | Average Loss: 4.78534e-13
+Training complete in 109.61 seconds!
+
+================ TESTING PHASE ================
+Prediction     Target         Error
+-----------------------------------------------
+6.02392e-16    0              6.02392e-16
+1              1              0
+1.38572e-19    0              1.38572e-19
+1              1              -9.01501e-14
+1.20424e-20    0              1.20424e-20
+1              1              -2.99691e-11
+4.45836e-18    0              4.45836e-18
+1              1              -4.26326e-14
+2.92165e-14    0              2.92165e-14
+1              1              0
+
+Final Test MSE: 4.57705e-13
+===============================================
+👻 shivam@MacBook-Pro ~/build 🌿(main) ❯ 
+```
