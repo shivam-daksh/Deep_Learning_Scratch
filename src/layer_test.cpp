@@ -7,6 +7,9 @@
 #include "SGD.hh"
 #include "Momentum.hh"
 #include "Adam.hh"
+#include "Loss/Loss.hh"
+#include "Metrics/Metrics.hh"
+#include "utils/Dataset.hh"
 
 int main() {
     std::string filename = "big_dataset.csv";
@@ -50,6 +53,13 @@ int main() {
         dataset.push_back({input, y});
     }
 
+    // --- TRAIN / VALIDATION / TEST SPLIT (70% / 15% / 15%) ---
+    DatasetSplit split = train_test_split(dataset, 0.70, 0.15, 0.15, true, 42);
+    std::cout << "Dataset Split:\n"
+              << "  Train samples: " << split.train.size() << "\n"
+              << "  Val   samples: " << split.val.size() << "\n"
+              << "  Test  samples: " << split.test.size() << "\n\n";
+
     // --- BUILD THE MODEL ---
     Model model;
     
@@ -63,10 +73,19 @@ int main() {
     output_layer.setActivation(Activation::SIGMOID);
     model.add(output_layer);
     
-    // Train and Evaluate
-    Adam optimizer(model, 0.3, 0.3, 0.01);
-    model.fit(dataset, 100, 32, &optimizer);
-    model.evaluate(dataset);
+    // Loss Function: Binary Cross Entropy
+    BCELoss bce_loss;
+
+    // Optimizer: Adam with L2 Weight Decay (Regularization)
+    double learning_rate = 0.01;
+    double weight_decay = 1e-4; // L2 Regularization penalty
+    Adam optimizer(model, 0.9, 0.999, learning_rate, weight_decay);
+
+    // Train on train set with validation monitoring
+    model.fit(split.train, 100, 32, &optimizer, &bce_loss, &split.val);
+
+    // Final Evaluation on Unseen Test Set
+    model.evaluate(split.test, &bce_loss, true);
 
     return 0;
 }

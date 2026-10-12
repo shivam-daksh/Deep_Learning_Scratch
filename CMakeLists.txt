@@ -46,6 +46,8 @@ target_include_directories(layer_test PRIVATE
     src/models
     src/Layer
     src/Optimizers
-    src/Tensor
+    src/Loss
+    src/Metrics
+    src/utils
 )
 
