@@ -6,13 +6,15 @@ class Optimizer;
 
 class Model {
     private:
+        size_t batch_size = 32;
         std::vector<Layer> layers;
         
     public:
         Model() = default;
+        Model(const size_t batch_size);
         void add(const Layer& layer);
         std::vector<Layer>& getLayers();
         Tensor<double> forward(Tensor<double> x);
-        void fit(const std::vector<std::pair<Tensor<double>, double>>& dataset, size_t epochs, Optimizer* optimizer);
+        void fit(const std::vector<std::pair<Tensor<double>, double>>& dataset, size_t epochs, size_t batch_size = 32, Optimizer* optimizer = nullptr);
         void evaluate(const std::vector<std::pair<Tensor<double>, double>>& dataset);
 };

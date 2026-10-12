@@ -40,8 +40,11 @@ void Layer::setActivation(Activation type) {
 Tensor<double> Layer::forward(const Tensor<double>& input) {
     this->last_input = input; // Cache input for backprop
     
-    Tensor<double> res = this->weights.matmul(input);
-    res = res + this->bias;
+    // Z = X * W^T + b
+    // input is [B, I] (or [I]), weights is [N, I], weights.T() is [I, N]
+    // res is [B, N]
+    Tensor<double> res = input.matmul(this->weights.T());
+    res = res + this->bias; // Broadcasting takes care of [B, N] + [N]
     
     // Activation Function
     for(size_t i = 0; i < res.getSize(); i++) {
@@ -58,48 +61,50 @@ Tensor<double> Layer::forward(const Tensor<double>& input) {
 }
 
 Tensor<double> Layer::backward(const Tensor<double>& dL_dout) {
-    size_t inputSize = this->last_input.getSize();
-    size_t numNeurons = this->bias.getSize();
-    
-    Tensor<double> dL_dInput(this->last_input.getShape());
-    for(size_t i = 0; i < inputSize; i++) {
-        dL_dInput.setIndexMem(i, 0.0);
-    }
-
-    for (size_t n = 0; n < numNeurons; n++) {
-        double output = this->last_output.getIndexMem(n);
-        double current_dL_dout = dL_dout.getIndexMem(n);
+    // 1. Calculate the local gradient of the activation function (dout_dZ)
+    Tensor<double> dL_dZ(this->last_output.getShape());
+    for (size_t i = 0; i < this->last_output.getSize(); i++) {
+        double output = this->last_output.getIndexMem(i);
+        double grad = dL_dout.getIndexMem(i);
         
-        // Calculate Derivative based on Activation Type
-        double dout_dZ = 1.0; // Default for LINEAR
-        
+        double dout_dZ = 1.0; // Default LINEAR
         if (activationType == Activation::SIGMOID) {
             dout_dZ = output * (1.0 - output);
         } else if (activationType == Activation::RELU) {
             dout_dZ = output > 0 ? 1.0 : 0.0;
         }
         
-        double delta = current_dL_dout * dout_dZ;
-        
-        for (size_t i = 0; i < inputSize; i++) {
-            size_t w_index = n * inputSize + i;
-            double current_w = this->weights.getIndexMem(w_index);
-            
-            // Pass error backward
-            double current_dL_dInput = dL_dInput.getIndexMem(i);
-            dL_dInput.setIndexMem(i, current_dL_dInput + (delta * current_w));
-            
-            // Update weight
-            double input_val = this->last_input.getIndexMem(i);
-            // this->weights.setIndexMem(w_index, current_w - (this->learningRate * delta * input_val));
-            this->dW.setIndexMem(w_index, delta * input_val);
-        }
-        
-        // Update Bias
-        double current_b = this->bias.getIndexMem(n);
-        // this->bias.setIndexMem(n, current_b - (this->learningRate * delta));
-        this->dB.setIndexMem(n, delta);
+        // Element-wise multiplication: dL_dZ = dL_dout * dout_dZ
+        dL_dZ.setIndexMem(i, grad * dout_dZ);
     }
     
-    return dL_dInput;
+    // 2. Gradients w.r.t Weights and Biases (Matrix Math!)
+    // dW = dL_dZ^T * X  => [N, B] * [B, I] => [N, I]
+    // If input was 1D [I], last_input is [I]. 
+    // dL_dZ is [N]. dL_dZ.T() is [N, 1], last_input is [1, I].
+    // To handle 1D and 2D seamlessly in matmul, we ensure they are 2D logic.
+    bool is_1d = (this->last_input.getShape().size() == 1);
+    
+    if (is_1d) {
+        // Fallback for current single-sample training (1D vectors)
+        for (size_t n = 0; n < this->bias.getSize(); n++) {
+            double delta = dL_dZ.getIndexMem(n);
+            this->dB.setIndexMem(n, delta);
+            for (size_t i = 0; i < this->last_input.getSize(); i++) {
+                size_t w_index = n * this->last_input.getSize() + i;
+                this->dW.setIndexMem(w_index, delta * this->last_input.getIndexMem(i));
+            }
+        }
+        return dL_dZ.matmul(this->weights); // [N] * [N, I] -> [I]
+    } else {
+        // True Mini-Batch Matrix Math (2D)
+        this->dW = dL_dZ.T().matmul(this->last_input);
+        
+        // dB = sum(dL_dZ, axis=0) => sum over batches
+        this->dB = dL_dZ.sum(0);
+        
+        // 3. Gradients w.r.t Input (to pass to the previous layer)
+        // dL_dX = dL_dZ * W => [B, N] * [N, I] => [B, I]
+        return dL_dZ.matmul(this->weights);
+    }
 }

@@ -414,14 +414,15 @@ Tensor<DType> Tensor<DType>::operator/(const Tensor<DType>& other) const {
         }
 
 template <typename DType>
-Tensor<DType> Tensor<DType>::transpose() {
-            std::reverse(this->shape.begin(), this->shape.end());
-            std::reverse(this->stride.begin(), this->stride.end());
-            return *this;
+Tensor<DType> Tensor<DType>::transpose() const {
+            Tensor<DType> res = *this;
+            std::reverse(res.shape.begin(), res.shape.end());
+            std::reverse(res.stride.begin(), res.stride.end());
+            return res;
         }
 
 template <typename DType>
-Tensor<DType> Tensor<DType>::T() {
+Tensor<DType> Tensor<DType>::T() const {
             return this->transpose();
         }
 

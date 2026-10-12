@@ -65,7 +65,7 @@ int main() {
     
     // Train and Evaluate
     Adam optimizer(model, 0.3, 0.3, 0.01);
-    model.fit(dataset, 100, &optimizer);
+    model.fit(dataset, 100, 32, &optimizer);
     model.evaluate(dataset);
 
     return 0;

@@ -54,8 +54,8 @@ class Tensor {
         Tensor operator-(const Tensor& other) const;
         Tensor operator*(const Tensor& other) const;
         Tensor operator/(const Tensor& other) const;
-        Tensor transpose();
-        Tensor T();
+        Tensor transpose() const;
+        Tensor T() const;
         Tensor sum(const size_t axis =  0, const bool keepdim=false) const;
         Tensor mean(const size_t axis = 0, const bool keepdim = false) const;
         Tensor matmul(const Tensor& other) const;

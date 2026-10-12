@@ -4,6 +4,8 @@
 #include "Model.hh"
 #include "Optimizer.hh"
 
+Model::Model(const size_t batch_size) : batch_size(batch_size){}
+
 void Model::add(const Layer& layer) {
     layers.push_back(layer);
 }
@@ -20,35 +22,53 @@ Tensor<double> Model::forward(Tensor<double> x) {
     return current;
 }
 
-void Model::fit(const std::vector<std::pair<Tensor<double>, double>>& dataset, size_t epochs, Optimizer* optimizer) {
-    std::cout << "Starting training on " << dataset.size() << " samples...\n";
+void Model::fit(const std::vector<std::pair<Tensor<double>, double>>& dataset, size_t epochs, size_t batch_size, Optimizer* optimizer) {
+    std::cout << "Starting Mini-Batch training on " << dataset.size() << " samples with Batch Size " << batch_size << "...\n";
     auto start_time = std::chrono::high_resolution_clock::now();
     
     for (size_t epoch = 0; epoch < epochs; ++epoch) {
         double total_loss = 0.0;
         
-        for (const auto& data_point : dataset) {
-            const Tensor<double>& x = data_point.first;
-            double target_y = data_point.second;
+        // batch training
+        for (size_t batch_start = 0; batch_start < dataset.size(); batch_start += batch_size) {
+            size_t current_batch_size = std::min(batch_size, dataset.size() - batch_start);
             
-            // Forward pass through the whole network
-            Tensor<double> prediction_tensor = this->forward(x);
-            double prediction = prediction_tensor.getIndexMem(0);
+            // segregate the input and target features
+            size_t inputFeatures = dataset[0].first.getSize();
+            Tensor<double> X_batch({current_batch_size, inputFeatures});
+            Tensor<double> Y_batch({current_batch_size, 1});
             
-            // Calculate Error (MSE)
-            double error = prediction - target_y;
-            total_loss += 0.5 * error * error;
+            for (size_t b = 0; b < current_batch_size; ++b) {
+                const Tensor<double>& x = dataset[batch_start + b].first;
+                double y = dataset[batch_start + b].second;
+                
+                Y_batch.setIndexMem(b, y);
+                for (size_t i = 0; i < inputFeatures; ++i) {
+                    X_batch.setIndexMem(b * inputFeatures + i, x.getIndexMem(i));
+                }
+            }
             
-            // Initial Gradient for Output Layer
-            Tensor<double> gradient({1});
-            gradient.setIndexMem(0, error);
+            // forward / prediction
+            Tensor<double> prediction_tensor = this->forward(X_batch);
             
-            // Backward pass through the network (in reverse)
+            // calculate the gradient
+            Tensor<double> gradient({current_batch_size, 1});
+            for (size_t b = 0; b < current_batch_size; ++b) {
+                double prediction = prediction_tensor.getIndexMem(b);
+                double target_y = Y_batch.getIndexMem(b);
+                
+                double error = prediction - target_y;
+                total_loss += 0.5 * error * error;
+                
+                gradient.setIndexMem(b, error / current_batch_size);
+            }
+            
+            // backward / calculate the gradient of all layers
             for (int i = layers.size() - 1; i >= 0; --i) {
                 gradient = layers[i].backward(gradient);
             }
             
-            // Optimizer step (if provided)
+            // update the weights
             if (optimizer) {
                 optimizer->step();
             }
