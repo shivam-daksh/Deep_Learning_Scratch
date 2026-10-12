@@ -3,6 +3,7 @@
 #include <cstdlib>
 
 enum class Activation { SIGMOID, RELU, LINEAR };
+enum class InitType {HE, XAVIER};
 
 class Layer {
     private:
@@ -22,10 +23,12 @@ class Layer {
         Activation activationType = Activation::LINEAR;
 
     public:
-        Layer(size_t no_of_neurons, size_t inputSize);
+        // Layer(size_t no_of_neurons, size_t inputSize);
+        Layer(const size_t no_of_neurons, const size_t inputSize, const InitType type);
         
         // void setLearningRate(double lr);
         void setActivation(Activation type);
+        void initWeights(const InitType type);
         
         Tensor<double> forward(const Tensor<double>& input);
         Tensor<double> backward(const Tensor<double>& dL_dout);

@@ -1,18 +1,40 @@
-#include "Layer.hh"
 #include <cmath>
 #include <iostream>
+#include <random>
+#include "Layer.hh"
 
-Layer::Layer(size_t no_of_neurons, size_t inputSize) : weights({no_of_neurons, inputSize}), bias({no_of_neurons}), dW({no_of_neurons, inputSize}), dB({no_of_neurons}), last_input({0}), last_output({0}) {
-    // Random weight initialization (CRITICAL to break symmetry in Deep Networks!)
-    for(size_t i = 0; i < weights.getSize(); i++) {
-        double r = ((double)rand() / RAND_MAX) * 2.0 - 1.0; // Random between -1 and 1
-        weights.setIndexMem(i, r);
+Layer::Layer(const size_t no_of_neurons, const size_t inputSize, const InitType type): weights({no_of_neurons, inputSize}), bias({no_of_neurons}), dW({no_of_neurons, inputSize}), dB({no_of_neurons}), last_input({0}), last_output({0}) {
+    // weight initialization for layer
+    this->initWeights(type);
+}
+
+void Layer::initWeights(const InitType type){
+    const size_t no_of_neurons = this->weights.getShape()[0];
+    const size_t inputSize = this->weights.getShape()[1];
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    if(type == InitType::XAVIER){
+        double std_dev = std::sqrt(2.0 / (no_of_neurons + inputSize));
+        std::normal_distribution<double> dist(0.0, std_dev);
+
+        for(size_t i = 0; i < this->weights.getSize(); i++) {
+            weights.setIndexMem(i, dist(gen));
+        }
+
+    } else if(type == InitType::HE){
+        double std_dev = std::sqrt(2.0 / (inputSize));
+        std::normal_distribution<double> dist(0.0, std_dev);
+
+        for(size_t i = 0; i < this->weights.getSize(); i++) {
+            weights.setIndexMem(i, dist(gen));
+        }
     }
     for(size_t i = 0; i < bias.getSize(); i++) {
         bias.setIndexMem(i, 0.0);
     }
 }
-
 Tensor<double>& Layer::getWeights(){
     return this->weights;
 }

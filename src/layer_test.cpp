@@ -54,12 +54,12 @@ int main() {
     Model model;
     
     // Hidden Layer
-    Layer hidden_layer(8, inputFeatures);
+    Layer hidden_layer(8, inputFeatures, InitType::HE);
     hidden_layer.setActivation(Activation::RELU);
     model.add(hidden_layer);
     
     // Output Layer
-    Layer output_layer(1, 8);
+    Layer output_layer(1, 8, InitType::XAVIER);
     output_layer.setActivation(Activation::SIGMOID);
     model.add(output_layer);
     
