@@ -73,7 +73,13 @@ Tensor<double> Layer::forward(const Tensor<double>& input) {
     size_t r_sz = res.getSize();
     if (activationType == Activation::SIGMOID) {
         for(size_t i = 0; i < r_sz; i++) {
-            r_data[i] = 1.0 / (1.0 + std::exp(-r_data[i]));
+            double val = r_data[i];
+            if (val >= 0.0) {
+                r_data[i] = 1.0 / (1.0 + std::exp(-val));
+            } else {
+                double exp_val = std::exp(val);
+                r_data[i] = exp_val / (1.0 + exp_val);
+            }
         }
     } else if (activationType == Activation::RELU) {
         for(size_t i = 0; i < r_sz; i++) {
