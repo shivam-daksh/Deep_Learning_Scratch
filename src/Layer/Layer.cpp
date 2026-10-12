@@ -45,7 +45,7 @@ Tensor<double> Layer::forward(const Tensor<double>& input) {
     // res is [B, N]
     Tensor<double> res = input.matmul(this->weights.T());
     res = res + this->bias; // Broadcasting takes care of [B, N] + [N]
-    
+            
     // Activation Function
     for(size_t i = 0; i < res.getSize(); i++) {
         double val = res.getIndexMem(i);
