@@ -243,14 +243,51 @@ std::vector<size_t> Tensor<DType>::returnIndex(size_t index, const std::vector<s
 template <typename DType>
 Tensor<DType> Tensor<DType>::operator+(const Tensor<DType>& other) const {
             Tensor res;
-            //check the shape
-            // if(this->shape.size() != other.shape.size()) throw std::invalid_argument("Tensor size must match for addition");
             if(this->areShapesEqual(this->shape, other.shape)){
                 res.resize(this->shape);
-
-                // element-wise addition
+                const DType* a = this->data();
+                const DType* b = other.data();
+                DType* r = res.data();
                 for(size_t i = 0; i < this->size; i++){
-                    res.storage[i] = this->storage[i] + other.storage[i];
+                    r[i] = a[i] + b[i];
+                }
+                return res;
+
+            } else if (this->shape.size() == 2 && other.shape.size() == 1 && this->shape[1] == other.shape[0]) {
+                // Fast-path: [M, N] + [N]
+                size_t M = this->shape[0];
+                size_t N = this->shape[1];
+                res.resize(this->shape);
+                const DType* a = this->data();
+                const DType* b = other.data();
+                DType* r = res.data();
+                size_t sA0 = this->stride[0], sA1 = this->stride[1];
+                size_t sB0 = other.stride[0];
+                for (size_t i = 0; i < M; ++i) {
+                    size_t a_row = i * sA0;
+                    size_t r_row = i * N;
+                    for (size_t j = 0; j < N; ++j) {
+                        r[r_row + j] = a[a_row + j * sA1] + b[j * sB0];
+                    }
+                }
+                return res;
+
+            } else if (this->shape.size() == 1 && other.shape.size() == 2 && this->shape[0] == other.shape[1]) {
+                // Fast-path: [N] + [M, N]
+                size_t M = other.shape[0];
+                size_t N = other.shape[1];
+                res.resize(other.shape);
+                const DType* a = this->data();
+                const DType* b = other.data();
+                DType* r = res.data();
+                size_t sA0 = this->stride[0];
+                size_t sB0 = other.stride[0], sB1 = other.stride[1];
+                for (size_t i = 0; i < M; ++i) {
+                    size_t b_row = i * sB0;
+                    size_t r_row = i * N;
+                    for (size_t j = 0; j < N; ++j) {
+                        r[r_row + j] = a[j * sA0] + b[b_row + j * sB1];
+                    }
                 }
                 return res;
 
@@ -287,10 +324,30 @@ Tensor<DType> Tensor<DType>::operator-(const Tensor<DType>& other) const {
             Tensor res;
             if(this->areShapesEqual(this->shape, other.shape)){
                 res.resize(this->shape);
-
-                // element-wise subtraction
+                const DType* a = this->data();
+                const DType* b = other.data();
+                DType* r = res.data();
                 for(size_t i = 0; i < this->size; i++){
-                    res.storage[i] = this->storage[i] - other.storage[i];
+                    r[i] = a[i] - b[i];
+                }
+                return res;
+
+            } else if (this->shape.size() == 2 && other.shape.size() == 1 && this->shape[1] == other.shape[0]) {
+                // Fast-path: [M, N] - [N]
+                size_t M = this->shape[0];
+                size_t N = this->shape[1];
+                res.resize(this->shape);
+                const DType* a = this->data();
+                const DType* b = other.data();
+                DType* r = res.data();
+                size_t sA0 = this->stride[0], sA1 = this->stride[1];
+                size_t sB0 = other.stride[0];
+                for (size_t i = 0; i < M; ++i) {
+                    size_t a_row = i * sA0;
+                    size_t r_row = i * N;
+                    for (size_t j = 0; j < N; ++j) {
+                        r[r_row + j] = a[a_row + j * sA1] - b[j * sB0];
+                    }
                 }
                 return res;
 
@@ -429,7 +486,38 @@ Tensor<DType> Tensor<DType>::T() const {
 template <typename DType>
 Tensor<DType> Tensor<DType>::sum(const size_t axis, const bool keepdim) const {
             if(axis >= this->shape.size()) throw std::out_of_range("Axis (index) out of the bound of the shape");
-            // if(this->shape[axis] == 0) throw std::invalid_argument("Zero axis can't be reduced");
+            if(this->shape[axis] == 0) throw std::invalid_argument("Zero axis can't be reduced");
+
+            if (this->shape.size() == 2) {
+                size_t M = this->shape[0];
+                size_t N = this->shape[1];
+                std::vector<size_t> outputShape = keepdim ? (axis == 0 ? std::vector<size_t>{1, N} : std::vector<size_t>{M, 1})
+                                                          : (axis == 0 ? std::vector<size_t>{N} : std::vector<size_t>{M});
+                Tensor res(outputShape);
+                res.fill(0);
+                const DType* in_data = this->data();
+                DType* out_data = res.data();
+                size_t s0 = this->stride[0], s1 = this->stride[1];
+
+                if (axis == 0) {
+                    for (size_t j = 0; j < N; ++j) {
+                        DType sum_val = 0;
+                        for (size_t i = 0; i < M; ++i) {
+                            sum_val += in_data[i * s0 + j * s1];
+                        }
+                        out_data[j] = sum_val;
+                    }
+                } else {
+                    for (size_t i = 0; i < M; ++i) {
+                        DType sum_val = 0;
+                        for (size_t j = 0; j < N; ++j) {
+                            sum_val += in_data[i * s0 + j * s1];
+                        }
+                        out_data[i] = sum_val;
+                    }
+                }
+                return res;
+            }
             
             //allocate new space;
             Tensor res;
@@ -443,10 +531,6 @@ Tensor<DType> Tensor<DType>::sum(const size_t axis, const bool keepdim) const {
                     continue;
                 }
                 outputShape.push_back(this->shape[i]);
-            }
-            
-            if(this->shape[axis] == 0){
-                throw std::invalid_argument("Zero axis can't be reduced");
             }
 
             // allocate the space for new tensor
@@ -561,6 +645,36 @@ Tensor<DType> Tensor<DType>::matmul(const Tensor<DType>& other) const {
                 throw std::invalid_argument(
                     "Incompatible dimensions for matrix multiplication"
                 );
+            }
+
+            // Fast-path: 2D Matrix Multiplication [M, K] x [K, N]
+            if (this->shape.size() == 2 && other.shape.size() == 2) {
+                Tensor result(std::vector<size_t>{M, N});
+                result.fill(0);
+                const DType* A_data = this->data();
+                const DType* B_data = other.data();
+                DType* C_data = result.data();
+
+                size_t sA0 = this->stride[0], sA1 = this->stride[1];
+                size_t sB0 = other.stride[0], sB1 = other.stride[1];
+                size_t sC0 = result.stride[0], sC1 = result.stride[1];
+
+                for (size_t i = 0; i < M; ++i) {
+                    size_t a_row = i * sA0;
+                    size_t c_row = i * sC0;
+                    for (size_t j = 0; j < N; ++j) {
+                        DType acc = 0;
+                        size_t a_idx = a_row;
+                        size_t b_idx = j * sB1;
+                        for (size_t k = 0; k < K; ++k) {
+                            acc += A_data[a_idx] * B_data[b_idx];
+                            a_idx += sA1;
+                            b_idx += sB0;
+                        }
+                        C_data[c_row + j * sC1] = acc;
+                    }
+                }
+                return result;
             }
 
             // Extract batch shapes

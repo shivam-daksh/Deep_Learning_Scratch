@@ -47,12 +47,15 @@ Tensor<double> Layer::forward(const Tensor<double>& input) {
     res = res + this->bias; // Broadcasting takes care of [B, N] + [N]
             
     // Activation Function
-    for(size_t i = 0; i < res.getSize(); i++) {
-        double val = res.getIndexMem(i);
-        if (activationType == Activation::SIGMOID) {
-            res.setIndexMem(i, 1.0 / (1.0 + std::exp(-val)));
-        } else if (activationType == Activation::RELU) {
-            res.setIndexMem(i, val > 0 ? val : 0.0);
+    double* r_data = res.data();
+    size_t r_sz = res.getSize();
+    if (activationType == Activation::SIGMOID) {
+        for(size_t i = 0; i < r_sz; i++) {
+            r_data[i] = 1.0 / (1.0 + std::exp(-r_data[i]));
+        }
+    } else if (activationType == Activation::RELU) {
+        for(size_t i = 0; i < r_sz; i++) {
+            r_data[i] = r_data[i] > 0.0 ? r_data[i] : 0.0;
         }
     }
     
@@ -63,19 +66,24 @@ Tensor<double> Layer::forward(const Tensor<double>& input) {
 Tensor<double> Layer::backward(const Tensor<double>& dL_dout) {
     // 1. Calculate the local gradient of the activation function (dout_dZ)
     Tensor<double> dL_dZ(this->last_output.getShape());
-    for (size_t i = 0; i < this->last_output.getSize(); i++) {
-        double output = this->last_output.getIndexMem(i);
-        double grad = dL_dout.getIndexMem(i);
-        
-        double dout_dZ = 1.0; // Default LINEAR
-        if (activationType == Activation::SIGMOID) {
-            dout_dZ = output * (1.0 - output);
-        } else if (activationType == Activation::RELU) {
-            dout_dZ = output > 0 ? 1.0 : 0.0;
+    const double* out_data = this->last_output.data();
+    const double* dout_data = dL_dout.data();
+    double* dz_data = dL_dZ.data();
+    size_t sz = this->last_output.getSize();
+
+    if (activationType == Activation::SIGMOID) {
+        for (size_t i = 0; i < sz; i++) {
+            double o = out_data[i];
+            dz_data[i] = dout_data[i] * (o * (1.0 - o));
         }
-        
-        // Element-wise multiplication: dL_dZ = dL_dout * dout_dZ
-        dL_dZ.setIndexMem(i, grad * dout_dZ);
+    } else if (activationType == Activation::RELU) {
+        for (size_t i = 0; i < sz; i++) {
+            dz_data[i] = dout_data[i] * (out_data[i] > 0.0 ? 1.0 : 0.0);
+        }
+    } else {
+        for (size_t i = 0; i < sz; i++) {
+            dz_data[i] = dout_data[i];
+        }
     }
     
     // 2. Gradients w.r.t Weights and Biases (Matrix Math!)

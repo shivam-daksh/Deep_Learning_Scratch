@@ -13,6 +13,8 @@ class TensorStorage {
         void resize(size_t arraySize);
         DType& operator[](const size_t index);
         const DType& operator[](const size_t index) const;
+        inline DType* data() { return buffer.data(); }
+        inline const DType* data() const { return buffer.data(); }
 };
 
 template <typename DType>
@@ -46,6 +48,8 @@ class Tensor {
             return this->stride;
         }
         // access the actual serial storage tensor
+        inline DType* data() { return this->storage.data(); }
+        inline const DType* data() const { return this->storage.data(); }
         const DType& getIndexMem(const size_t index) const;
         void setIndexMem(const size_t index, const DType& value);
 

@@ -37,14 +37,15 @@ void Model::fit(const std::vector<std::pair<Tensor<double>, double>>& dataset, s
             size_t inputFeatures = dataset[0].first.getSize();
             Tensor<double> X_batch({current_batch_size, inputFeatures});
             Tensor<double> Y_batch({current_batch_size, 1});
+            double* y_ptr = Y_batch.data();
+            double* x_batch_ptr = X_batch.data();
             
             for (size_t b = 0; b < current_batch_size; ++b) {
                 const Tensor<double>& x = dataset[batch_start + b].first;
-                double y = dataset[batch_start + b].second;
-                
-                Y_batch.setIndexMem(b, y);
+                y_ptr[b] = dataset[batch_start + b].second;
+                const double* x_src = x.data();
                 for (size_t i = 0; i < inputFeatures; ++i) {
-                    X_batch.setIndexMem(b * inputFeatures + i, x.getIndexMem(i));
+                    x_batch_ptr[b * inputFeatures + i] = x_src[i];
                 }
             }
             
@@ -53,14 +54,17 @@ void Model::fit(const std::vector<std::pair<Tensor<double>, double>>& dataset, s
             
             // calculate the gradient
             Tensor<double> gradient({current_batch_size, 1});
+            double* grad_ptr = gradient.data();
+            const double* pred_ptr = prediction_tensor.data();
+
             for (size_t b = 0; b < current_batch_size; ++b) {
-                double prediction = prediction_tensor.getIndexMem(b);
-                double target_y = Y_batch.getIndexMem(b);
+                double prediction = pred_ptr[b];
+                double target_y = y_ptr[b];
                 
                 double error = prediction - target_y;
                 total_loss += 0.5 * error * error;
                 
-                gradient.setIndexMem(b, error / current_batch_size);
+                grad_ptr[b] = error / current_batch_size;
             }
             
             // backward / calculate the gradient of all layers
