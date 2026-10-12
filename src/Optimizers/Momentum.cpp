@@ -1,6 +1,7 @@
 #include <vector>
 #include "Momentum.hh"
 #include "Layer.hh"
+#include "Parameter.hh"
 
 Momentum::Momentum(Model &model, const double beta, const double lr) : model(model), beta(beta), learningRate(lr){
     std::vector<Layer> &layers = this->model.getLayers();
@@ -23,11 +24,13 @@ void Momentum::step(){
     std::vector<Layer> &layers = this->model.getLayers();
     size_t layer_count = 0;
     for(Layer &layer : layers){
-        Tensor<double> &weights = layer.getWeights();
-        Tensor<double> &dW = layer.getdW();
+        Parameter<double> &wt = layer.getParameter(ParamType::WEIGHT);
+        Tensor<double> &weights = wt.value;
+        Tensor<double> &dW = wt.gradient;
         
-        Tensor<double> &bias = layer.getBias();
-        Tensor<double> &dB = layer.getdB();
+        Parameter<double> &b = layer.getParameter(ParamType::BIAS);
+        Tensor<double> &bias = b.value;
+        Tensor<double> &dB = b.gradient;
 
         Tensor<double> &w_vel_layer = this->vel_w[layer_count];
         Tensor<double> &b_vel_layer = this->vel_b[layer_count];

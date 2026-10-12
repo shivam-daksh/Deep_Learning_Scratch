@@ -3,14 +3,14 @@
 #include <random>
 #include "Layer.hh"
 
-Layer::Layer(const size_t no_of_neurons, const size_t inputSize, const InitType type): weights({no_of_neurons, inputSize}), bias({no_of_neurons}), dW({no_of_neurons, inputSize}), dB({no_of_neurons}), last_input({0}), last_output({0}) {
+Layer::Layer(const size_t no_of_neurons, const size_t inputSize, const InitType type): weights({no_of_neurons, inputSize}), bias({no_of_neurons}), last_input({0}), last_output({0}) {
     // weight initialization for layer
     this->initWeights(type);
 }
 
 void Layer::initWeights(const InitType type){
-    const size_t no_of_neurons = this->weights.getShape()[0];
-    const size_t inputSize = this->weights.getShape()[1];
+    const size_t no_of_neurons = this->weights.value.getShape()[0];
+    const size_t inputSize = this->weights.value.getShape()[1];
 
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -19,36 +19,50 @@ void Layer::initWeights(const InitType type){
         double std_dev = std::sqrt(2.0 / (no_of_neurons + inputSize));
         std::normal_distribution<double> dist(0.0, std_dev);
 
-        for(size_t i = 0; i < this->weights.getSize(); i++) {
-            weights.setIndexMem(i, dist(gen));
+        for(size_t i = 0; i < this->weights.value.getSize(); i++) {
+            weights.value.setIndexMem(i, dist(gen));
         }
 
     } else if(type == InitType::HE){
         double std_dev = std::sqrt(2.0 / (inputSize));
         std::normal_distribution<double> dist(0.0, std_dev);
 
-        for(size_t i = 0; i < this->weights.getSize(); i++) {
-            weights.setIndexMem(i, dist(gen));
+        for(size_t i = 0; i < this->weights.value.getSize(); i++) {
+            weights.value.setIndexMem(i, dist(gen));
         }
     }
-    for(size_t i = 0; i < bias.getSize(); i++) {
-        bias.setIndexMem(i, 0.0);
+    for(size_t i = 0; i < bias.value.getSize(); i++) {
+        bias.value.setIndexMem(i, 0.0);
     }
 }
+
+Parameter<double>& Layer::getParameter(const ParamType &type){
+    switch (type)
+    {
+    case ParamType::WEIGHT:
+        return this->weights;
+    case ParamType::BIAS:
+        return this->bias;
+    default:
+        throw std::invalid_argument("Unknown parameter type");
+        break;
+    }
+}
+
 Tensor<double>& Layer::getWeights(){
-    return this->weights;
+    return this->weights.value;
 }
 
 Tensor<double>& Layer::getBias(){
-    return this->bias;
+    return this->bias.value;
 }
 
 Tensor<double>& Layer::getdW(){
-    return this->dW;
+    return this->weights.gradient;
 }
 
 Tensor<double>& Layer::getdB(){
-    return this->dB;
+    return this->bias.gradient;
 }
 
 // void Layer::setLearningRate(double lr) {
@@ -65,8 +79,8 @@ Tensor<double> Layer::forward(const Tensor<double>& input) {
     // Z = X * W^T + b
     // input is [B, I] (or [I]), weights is [N, I], weights.T() is [I, N]
     // res is [B, N]
-    Tensor<double> res = input.matmul(this->weights.T());
-    res = res + this->bias; // Broadcasting takes care of [B, N] + [N]
+    Tensor<double> res = input.matmul(this->weights.value.T());
+    res = res + this->bias.value; // Broadcasting takes care of [B, N] + [N]
             
     // Activation Function
     double* r_data = res.data();
@@ -123,22 +137,22 @@ Tensor<double> Layer::backward(const Tensor<double>& dL_dout) {
     
     if (is_1d) {
         // Fallback for current single-sample training (1D vectors)
-        for (size_t n = 0; n < this->bias.getSize(); n++) {
+        for (size_t n = 0; n < this->bias.value.getSize(); n++) {
             double delta = dL_dZ.getIndexMem(n);
-            this->dB.setIndexMem(n, delta);
+            this->bias.gradient.setIndexMem(n, delta);
             for (size_t i = 0; i < this->last_input.getSize(); i++) {
                 size_t w_index = n * this->last_input.getSize() + i;
-                this->dW.setIndexMem(w_index, delta * this->last_input.getIndexMem(i));
+                this->weights.gradient.setIndexMem(w_index, delta * this->last_input.getIndexMem(i));
             }
         }
-        return dL_dZ.matmul(this->weights); // [N] * [N, I] -> [I]
+        return dL_dZ.matmul(this->weights.value); // [N] * [N, I] -> [I]
     } else {
 
-        this->dW = dL_dZ.T().matmul(this->last_input);
-        this->dB = dL_dZ.sum(0);
+        this->weights.gradient = dL_dZ.T().matmul(this->last_input);
+        this->bias.gradient = dL_dZ.sum(0);
         
         // Gradients w.r.t Input (to pass to the previous layer)
         // dL_dX = dL_dZ * W => [B, N] * [N, I] => [B, I]
-        return dL_dZ.matmul(this->weights);
+        return dL_dZ.matmul(this->weights.value);
     }
 }

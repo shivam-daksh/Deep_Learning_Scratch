@@ -1,4 +1,5 @@
 #include "SGD.hh"
+#include "Parameter.hh"
 
 SGD::SGD(Model &model, double lr) : model(model), learningRate(lr){}
 
@@ -6,10 +7,13 @@ void SGD::step(){
     std::vector<Layer>& layers = this->model.getLayers();
 
     for(Layer &layer : layers){
-        Tensor<double> &weights = layer.getWeights();
-        Tensor<double> &bias =  layer.getBias();
-        const Tensor<double> &dW = layer.getdW();
-        const Tensor<double> &dB = layer.getdB();
+        Parameter<double> &wt = layer.getParameter(ParamType::WEIGHT);
+        Tensor<double> &weights = wt.value;
+        Tensor<double> &dW = wt.gradient;
+        
+        Parameter<double> &b = layer.getParameter(ParamType::BIAS);
+        Tensor<double> &bias = b.value;
+        Tensor<double> &dB = b.gradient;
 
         size_t no_neurons = weights.getShape()[0];
         size_t inputSize = weights.getShape()[1];

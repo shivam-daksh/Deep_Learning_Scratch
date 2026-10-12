@@ -1,20 +1,24 @@
 #pragma once
-#include "Tensor.hh"
 #include <cstdlib>
+#include "Tensor.hh"
+#include "Parameter.hh"
 
 enum class Activation { SIGMOID, RELU, LINEAR };
 enum class InitType {HE, XAVIER};
+enum class ParamType {WEIGHT, BIAS};
 
 class Layer {
     private:
         // double learningRate = 0.01;
         // parameters
-        Tensor<double> weights;
-        Tensor<double> bias;
+        Parameter<double> weights;
+        Parameter<double> bias;
+        // Tensor<double> weights;
+        // Tensor<double> bias;
 
         // gradient
-        Tensor<double> dW;
-        Tensor<double> dB;
+        // Tensor<double> dW;
+        // Tensor<double> dB;
 
         // Cache for backpropagation
         Tensor<double> last_input;
@@ -32,6 +36,7 @@ class Layer {
         
         Tensor<double> forward(const Tensor<double>& input);
         Tensor<double> backward(const Tensor<double>& dL_dout);
+        Parameter<double>& getParameter(const ParamType &type);
         Tensor<double>& getWeights();
         Tensor<double>& getBias();
         Tensor<double>& getdW();
