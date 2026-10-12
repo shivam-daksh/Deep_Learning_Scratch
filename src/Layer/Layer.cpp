@@ -133,13 +133,11 @@ Tensor<double> Layer::backward(const Tensor<double>& dL_dout) {
         }
         return dL_dZ.matmul(this->weights); // [N] * [N, I] -> [I]
     } else {
-        // True Mini-Batch Matrix Math (2D)
+
         this->dW = dL_dZ.T().matmul(this->last_input);
-        
-        // dB = sum(dL_dZ, axis=0) => sum over batches
         this->dB = dL_dZ.sum(0);
         
-        // 3. Gradients w.r.t Input (to pass to the previous layer)
+        // Gradients w.r.t Input (to pass to the previous layer)
         // dL_dX = dL_dZ * W => [B, N] * [N, I] => [B, I]
         return dL_dZ.matmul(this->weights);
     }
