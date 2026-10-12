@@ -3,8 +3,10 @@
 #include "Layer.hh"
 #include "Parameter.hh"
 
-Momentum::Momentum(Model &model, const double beta, const double lr) : model(model), beta(beta), learningRate(lr){
-
+Momentum::Momentum(Model &model, const double beta, const double lr, double weight_decay, double l1) 
+    : model(model), beta(beta), learningRate(lr) {
+    this->weight_decay = weight_decay;
+    this->l1_ratio = l1;
 }
 
 void Momentum::step(){
@@ -29,9 +31,11 @@ void Momentum::step(){
             const double* grad = p->gradient.data();
             size_t sz = p->value.getSize();
             double* vel = velocities[p].data();
+            bool reg = p->regularize;
 
             for(size_t i = 0; i < sz; ++i){
-                double newVel = this->beta * vel[i] + grad[i];
+                double g = this->applyRegularization(grad[i], data[i], reg);
+                double newVel = this->beta * vel[i] + g;
                 vel[i] = newVel;
                 data[i] -= (this->learningRate * newVel);
             }

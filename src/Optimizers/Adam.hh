@@ -11,7 +11,7 @@ class Adam : public Optimizer{
         // std::vector<Tensor<double>> vel_w, vel_b, m_w, m_b;
 
     public:
-        Adam(Model &model, const double beta1, const double beta2, const double lr);
+        Adam(Model &model, const double beta1, const double beta2, const double lr, double weight_decay = 0.0, double l1 = 0.0);
         void step() override;
-        ~Adam() = default;
+        ~Adam() override = default;
 };

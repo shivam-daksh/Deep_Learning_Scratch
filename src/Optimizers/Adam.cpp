@@ -1,8 +1,10 @@
 #include "Adam.hh"
 #include "Parameter.hh"
 
-Adam::Adam(Model &model, const double beta1, const double beta2, const double lr) : model(model), beta1(beta1), beta2(beta2), learningRate(lr){
-
+Adam::Adam(Model &model, const double beta1, const double beta2, const double lr, double weight_decay, double l1) 
+    : model(model), beta1(beta1), beta2(beta2), learningRate(lr) {
+    this->weight_decay = weight_decay;
+    this->l1_ratio = l1;
 }
 
 void Adam::step(){
@@ -30,20 +32,22 @@ void Adam::step(){
             size_t sz = p->value.getSize();
             double* moment = velocities[p].first.data();
             double* vel = velocities[p].second.data();
+            bool reg = p->regularize;
 
             for(size_t i = 0; i < sz; ++i){
+                double g = this->applyRegularization(grad[i], data[i], reg);
                 // first moment
-                double mt = (this->beta1 * moment[i]) + ((1 - this->beta1) * grad[i]);
+                double mt = (this->beta1 * moment[i]) + ((1.0 - this->beta1) * g);
                 moment[i] = mt;
                 // second moment
-                double v = (this->beta2 * vel[i]) + ((1 - this->beta2) * (grad[i] * grad[i]));
+                double v = (this->beta2 * vel[i]) + ((1.0 - this->beta2) * (g * g));
                 vel[i] = v;
 
                 // bias correction
-                mt /= (1 - this->beta1);
-                v /= (1 - this->beta2);
+                double mt_corr = mt / (1.0 - this->beta1);
+                double v_corr = v / (1.0 - this->beta2);
 
-                double val = (mt) / (std::sqrt(v) + 1.0e-8);
+                double val = (mt_corr) / (std::sqrt(v_corr) + 1.0e-8);
                 
                 data[i] -= (this->learningRate * val);
             }
