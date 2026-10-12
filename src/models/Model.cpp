@@ -7,17 +7,17 @@
 Model::Model(const size_t batch_size) : batch_size(batch_size){}
 
 void Model::add(const Layer& layer) {
-    layers.push_back(layer);
+    layers.push_back(std::make_unique<Layer>(layer));
 }
 
-std::vector<Layer>& Model::getLayers(){
+std::vector<std::unique_ptr<Layer>>& Model::getLayers(){
     return this->layers;
 }
 
-Tensor<double> Model::forward(Tensor<double> x) {
+Tensor<double> Model::forward(const Tensor<double>& x) {
     Tensor<double> current = x;
-    for (Layer& layer : layers) {
-        current = layer.forward(current);
+    for (std::unique_ptr<Layer>& layer : layers) {
+        current = layer->forward(current);
     }
     return current;
 }
@@ -69,7 +69,7 @@ void Model::fit(const std::vector<std::pair<Tensor<double>, double>>& dataset, s
             
             // backward / calculate the gradient of all layers
             for (int i = layers.size() - 1; i >= 0; --i) {
-                gradient = layers[i].backward(gradient);
+                gradient = layers[i]->backward(gradient);
             }
             
             // update the weights

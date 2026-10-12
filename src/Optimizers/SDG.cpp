@@ -4,10 +4,10 @@
 SGD::SGD(Model &model, double lr) : model(model), learningRate(lr){}
 
 void SGD::step(){
-    std::vector<Layer>& layers = this->model.getLayers();
+    std::vector<std::unique_ptr<Layer>>& layers = this->model.getLayers();
 
-    for(Layer &layer : layers){
-       std::vector<Parameter<double>*> parameters = layer.getParameter();
+    for(std::unique_ptr<Layer> &layer : layers){
+       std::vector<Parameter<double>*> parameters = layer->getParameter();
 
        for(Parameter<double>* p : parameters){
         double* data = p->value.data();

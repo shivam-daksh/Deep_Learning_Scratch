@@ -6,13 +6,11 @@ Adam::Adam(Model &model, const double beta1, const double beta2, const double lr
 }
 
 void Adam::step(){
-    std::vector<Layer> &layers = this->model.getLayers();
+    std::vector<std::unique_ptr<Layer>>& layers = this->model.getLayers();
     size_t layer_count = 0;
-    for(Layer &layer : layers){
+    for(std::unique_ptr<Layer> &layer : layers){
 
-
-
-        std::vector<Parameter<double>*> parameters = layer.getParameter();
+        std::vector<Parameter<double>*> parameters = layer->getParameter();
 
         // Tensor<double> &w_vel_layer = this->vel_w[layer_count];
         // Tensor<double> &b_vel_layer = this->vel_b[layer_count];

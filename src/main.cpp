@@ -2,8 +2,9 @@
 #include <vector>
 #include <stdexcept>
 
-#include "Tensor/TensorStorage.hh"
+#include "Tensor.hh"
 
+#define Tensor Tensor<double>
 
 void printTest(const std::string& name, bool passed)
 {
