@@ -4,8 +4,17 @@
 #include "Layer.hh"
 
 Layer::Layer(const size_t no_of_neurons, const size_t inputSize, const InitType type): weights({no_of_neurons, inputSize}), bias({no_of_neurons}), last_input({0}), last_output({0}) {
+    // register the parameters
+    this->registerParam(this->weights);
+    this->registerParam(this->bias);
     // weight initialization for layer
     this->initWeights(type);
+}
+
+Layer::Layer(const Layer& other) : weights(other.weights), bias(other.bias), activationType(other.activationType), last_input(other.last_input), last_output(other.last_output) {
+    // Re-register pointers to THIS new object's memory!
+    this->registerParam(this->weights);
+    this->registerParam(this->bias);
 }
 
 void Layer::initWeights(const InitType type){
@@ -36,17 +45,8 @@ void Layer::initWeights(const InitType type){
     }
 }
 
-Parameter<double>& Layer::getParameter(const ParamType &type){
-    switch (type)
-    {
-    case ParamType::WEIGHT:
-        return this->weights;
-    case ParamType::BIAS:
-        return this->bias;
-    default:
-        throw std::invalid_argument("Unknown parameter type");
-        break;
-    }
+std::vector<Parameter<double>*> Layer::getParameter(){
+    return this->param_list;
 }
 
 Tensor<double>& Layer::getWeights(){
