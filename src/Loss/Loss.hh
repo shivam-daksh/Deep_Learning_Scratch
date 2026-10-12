@@ -1,24 +1,18 @@
+//
 #pragma once
 #include <cmath>
 #include <algorithm>
 #include <string>
 
-// Abstract Base Class for Loss Functions
 class Loss {
 public:
     virtual ~Loss() = default;
-    
-    // Compute scalar loss for a single prediction and target
     virtual double calculate(double pred, double target) const = 0;
-    
-    // Compute derivative dLoss / dPred
     virtual double gradient(double pred, double target) const = 0;
-    
-    // Human-readable name of the loss function
     virtual std::string name() const = 0;
 };
 
-// Mean Squared Error (MSE): L = 0.5 * (pred - target)^2
+// Mean Squared Error (MSE)
 class MSELoss : public Loss {
 public:
     double calculate(double pred, double target) const override {
@@ -35,7 +29,7 @@ public:
     }
 };
 
-// Mean Absolute Error (MAE / L1 Loss): L = |pred - target|
+// Mean Absolute Error 
 class MAELoss : public Loss {
 public:
     double calculate(double pred, double target) const override {
@@ -54,7 +48,7 @@ public:
     }
 };
 
-// Huber Loss (Smooth L1 Loss): Robust to outliers
+// Huber Loss (Smooth L1 Loss)
 class HuberLoss : public Loss {
 private:
     double delta;
@@ -84,7 +78,7 @@ public:
     }
 };
 
-// Binary Cross Entropy (BCE): L = - [target * log(pred) + (1 - target) * log(1 - pred)]
+// Binary Cross Entropy (BCE)
 class BCELoss : public Loss {
 public:
     double calculate(double pred, double target) const override {

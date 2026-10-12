@@ -1,3 +1,4 @@
+// part of this file is AI-Generated
 #pragma once
 #include <vector>
 #include <cmath>
@@ -30,7 +31,7 @@ struct EvaluationResult {
 // Error and Metric calculations
 class Metrics {
 public:
-    // Mean Squared Error: sum((y_pred - y_true)^2) / N
+    // Mean Squared Error
     static double mse(const std::vector<double>& preds, const std::vector<double>& targets) {
         if (preds.empty()) return 0.0;
         double sum = 0.0;
@@ -46,7 +47,7 @@ public:
         return std::sqrt(mse(preds, targets));
     }
 
-    // Mean Absolute Error: sum(|y_pred - y_true|) / N
+    // Mean Absolute Error
     static double mae(const std::vector<double>& preds, const std::vector<double>& targets) {
         if (preds.empty()) return 0.0;
         double sum = 0.0;
@@ -56,7 +57,6 @@ public:
         return sum / preds.size();
     }
 
-    // Classification Accuracy: percentage of predictions matching target (using threshold, default 0.5)
     static double accuracy(const std::vector<double>& preds, const std::vector<double>& targets, double threshold = 0.5) {
         if (preds.empty()) return 0.0;
         size_t correct = 0;

@@ -1,3 +1,5 @@
+// part of this code is AI-Generated
+
 #pragma once
 #include <vector>
 #include <utility>
