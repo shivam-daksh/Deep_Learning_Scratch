@@ -3,7 +3,7 @@
 #include <random>
 #include "Layer.hh"
 
-Layer::Layer(const size_t no_of_neurons, const size_t inputSize, const InitType type): weights({no_of_neurons, inputSize}), bias({no_of_neurons}), last_input({0}), last_output({0}) {
+Layer::Layer(const size_t no_of_neurons, const size_t inputSize, const InitType type): weights({no_of_neurons, inputSize}, true), bias({no_of_neurons}, false), last_input({0}), last_output({0}) {
     // register the parameters
     this->registerParam(this->weights);
     this->registerParam(this->bias);
