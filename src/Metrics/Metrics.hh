@@ -6,7 +6,6 @@
 #include <iostream>
 #include <string>
 
-// Struct holding aggregated evaluation metrics
 struct EvaluationResult {
     double loss = 0.0;
     double mse = 0.0;
@@ -31,7 +30,6 @@ struct EvaluationResult {
 // Error and Metric calculations
 class Metrics {
 public:
-    // Mean Squared Error
     static double mse(const std::vector<double>& preds, const std::vector<double>& targets) {
         if (preds.empty()) return 0.0;
         double sum = 0.0;
@@ -42,12 +40,10 @@ public:
         return sum / preds.size();
     }
 
-    // Root Mean Squared Error
     static double rmse(const std::vector<double>& preds, const std::vector<double>& targets) {
         return std::sqrt(mse(preds, targets));
     }
 
-    // Mean Absolute Error
     static double mae(const std::vector<double>& preds, const std::vector<double>& targets) {
         if (preds.empty()) return 0.0;
         double sum = 0.0;
